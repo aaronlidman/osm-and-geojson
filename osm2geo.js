@@ -16,9 +16,6 @@
  * It takes in a .osm (xml) as parameter and retruns the corresponding 
  * GeoJson object.
  *
- * LIMITATION: As of now all Ways are made into LineString. No "Polygon"
- * features are created.
- *
  * ***********************************************************************/
 var osm2geo = function(osm){
     // Check wether the argument is a Jquery object and act accordingly
@@ -63,13 +60,26 @@ var osm2geo = function(osm){
     // Ways
     var $ways = $("way", $xml);
     $ways.each(function(index, ele){
-        var feature = getFeature(ele, "LineString");
+        var feature = new Object;
         // List all the nodes
         var nodes = $(ele).find("nd");
+        // If first and last nd are same, then its a polygon
+        if($(nodes).last().attr("ref") === $(nodes).first().attr("ref")){
+            feature = getFeature(ele, "Polygon");
+            feature.geometry.coordinates.push([]);
+        }else{
+            feature = getFeature(ele, "LineString");
+        }
         nodes.each(function(index, nd){
             var node = $xml.find("node[id='"+$(nd).attr("ref")+"']"); // find the node with id ref'ed in way
             var cords = [parseFloat(node.attr("lon")), parseFloat(node.attr("lat"))]; // get the lat,lon of the node
-            feature.geometry.coordinates.push(cords); // save the lat,lon in the feature
+            // If polygon push it inside the cords[[]]
+            if(feature.geometry.type === "Polygon"){
+                feature.geometry.coordinates[0].push(cords);
+            }// if just Line push inside cords[]
+            else{
+                feature.geometry.coordinates.push(cords);
+            }
         });
        // Save the LineString in the Main object
         geo.features.push(feature);
