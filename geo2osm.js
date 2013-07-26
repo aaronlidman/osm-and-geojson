@@ -1,6 +1,9 @@
 // only Point, Polygon, MultiPolygon for now
 // basic structure from:
 // https://github.com/JasonSanford/GeoJSON-to-Google-Maps
+
+// todo:
+    // make changeset completely optional
 var geo2osm = function(geo, changeset) {
     function togeojson(geo, properties) {
         var nodes = '',
@@ -24,6 +27,7 @@ var geo2osm = function(geo, changeset) {
                 break;
             case 'Polygon':
                 if (geo.coordinates.length > 1) {
+                    // polygon with holes -> multipolygon
                     relations += '<relation id="' + count + '" changeset="' + changeset +'">';
                     count--;
 
@@ -38,6 +42,7 @@ var geo2osm = function(geo, changeset) {
                         }
 
                         ways += '<way id="' + count + '" changeset="' + changeset + '">';
+                        count--;
                         for (var a = 0; a < geo.coordinates[i].length-1; a++) {
                             coords.push([geo.coordinates[i][a][1], geo.coordinates[i][a][0]]);
                         }
@@ -50,28 +55,36 @@ var geo2osm = function(geo, changeset) {
                     relations += propertiesToTags(properties);
                     relations += '</relation>';
                 } else {
-                    // just a simple polygon
+                    // polygon -> way
+                    var coords = [];
+                    ways += '<way id="' + count + '" changeset="' + changeset + '">';
+                    count--;
                     for (var j = 0; j < geo.coordinates[0].length; j++) {
-
+                        coords.push([geo.coordinates[0][j][1], geo.coordinates[0][j][0]]);
                     }
+                    coords = createNodes(coords, true);
+                    nodes += coords['nodes'];
+                    ways += coords['nds'];
+                    ways += propertiesToTags(properties);
+                    ways += '</way>';
                 }
                 break;
 
         }
 
+        osm = '<osm version="0.6" generator="geo2osm.js">' + nodes + ways + relations + '</osm>';
+
         return {
             'nodes': nodes,
             'ways': ways,
-            'relations': relations
+            'relations': relations,
+            'osm': osm
         };
     }
 
     function propertiesToTags(properties) {
-        console.log('yep');
-        console.log(properties);
         var tags = '';
         for (var tag in properties) {
-            console.log(tag);
             tags += '<tag k="' + tag + '" v="' + properties[tag] + '"/>';
         }
         return tags;
@@ -98,8 +111,6 @@ var geo2osm = function(geo, changeset) {
             }
             count--;
         }
-        console.log(nodes);
-        console.log(nds);
         return {'nds': nds, 'nodes': nodes};
     }
 
@@ -132,7 +143,7 @@ var geo2osm = function(geo, changeset) {
 
         case 'Feature':
             if (geo.properties && geo.geometry) {
-                obj = togeojson(geo.geometry);
+                obj = togeojson(geo.geometry, geo.properties);
             } else {
                 console.log('Invalid GeoJSON object: Feature object missing \"properties\" or \"geometry\" member.');
             }
@@ -152,7 +163,8 @@ var geo2osm = function(geo, changeset) {
             break;
 
         default:
-            console.log('Invalid GeoJSON object: GeoJSON object must be one of \"Point\", \"LineString\", \"Polygon\", \"MultiPolygon\", \"Feature\", \"FeatureCollection\" or \"GeometryCollection\".');
+            console.log('Invalid GeoJSON object: GeoJSON object must be one of \"Point\", \"LineString\",' +
+                '\"Polygon\", \"MultiPolygon\", \"Feature\", \"FeatureCollection\" or \"GeometryCollection\".');
     }
 
     return obj;
