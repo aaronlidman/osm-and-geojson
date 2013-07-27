@@ -1,7 +1,7 @@
 ###osm2geo.js
 - Converts OSM xml to GeoJSON
 - usage: include `osm2geo.js` then use `osm2geo(osmString)`;
-- A fork of [OSM2GO by tecoholic](https://gist.github.com/tecoholic/1396990) this version contains significant improvements
+- A fork of [OSM2GEO by tecoholic](https://gist.github.com/tecoholic/1396990) this version contains significant improvements
     - removed jQuery dependency
     - quicker loops
     - node caching

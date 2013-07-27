@@ -14,8 +14,9 @@ var geo2osm = function(geo, changeset) {
 
         switch (geo.type) {
             case 'Point':
-                nodes += '<node id="' + count + '" lat="' + geo.coordinates[1] +
-                '" lon="' + geo.coordinates[0] + '">';
+                var coord = roundCoords([geo.coordinates]);
+                nodes += '<node id="' + count + '" lat="' + coord[0][1] +
+                '" lon="' + coord[0][0] + '">';
                 nodes += propertiesToTags(properties);
                 nodes += '</node>';
                 count--;
@@ -136,12 +137,22 @@ var geo2osm = function(geo, changeset) {
         return tags;
     }
 
+    function roundCoords(coords){
+        for (var a = 0; a < coords.length; a++) {
+            coords[a][0] = Math.round(coords[a][0] * 1000000) / 1000000;
+            coords[a][1] = Math.round(coords[a][1] * 1000000) / 1000000;
+        }
+        return coords;
+    }
+
     function createNodes(coords, repeatLastND) {
         var nds = '',
             nodes = '',
             length = coords.length;
         repeatLastND = repeatLastND || false;
             // for polygons
+
+        coords = roundCoords(coords);
 
         for (var a = 0; a < length; a++) {
             if (repeatLastND && a === 0) {
