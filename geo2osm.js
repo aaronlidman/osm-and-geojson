@@ -109,7 +109,7 @@ var geo2osm = function(geo, changeset) {
             ways += '<way id="' + count + '" changeset="' + changeset + '">';
             if (multipolygon) relations += '<member type="way" ref="' + count + '" role="outer"/>';
             count--;
-            for (var j = 0; j < geo.coordinates[0].length; j++) {
+            for (var j = 0; j < geo.coordinates[0].length-1; j++) {
                 coords.push([geo.coordinates[0][j][1], geo.coordinates[0][j][0]]);
             }
             coords = createNodes(coords, true);
@@ -129,7 +129,9 @@ var geo2osm = function(geo, changeset) {
     function propertiesToTags(properties) {
         var tags = '';
         for (var tag in properties) {
-            tags += '<tag k="' + tag + '" v="' + properties[tag] + '"/>';
+            if (properties[tag] != null) {
+                tags += '<tag k="' + tag + '" v="' + properties[tag] + '"/>';
+            }
         }
         return tags;
     }
