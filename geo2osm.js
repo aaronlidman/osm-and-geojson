@@ -4,6 +4,7 @@
 
 // todo:
     // make changeset completely optional
+    // fix indexed output with multipolygon feature collection, should be flat string
 var geo2osm = function(geo, changeset) {
     function togeojson(geo, properties) {
         var nodes = '',
@@ -31,33 +32,24 @@ var geo2osm = function(geo, changeset) {
                 break;
 
             case 'MultiPolygon':
-                var extraRelations = '';
                 relations += '<relation id="' + count + '" changeset="' + changeset + '">';
                 properties['type'] = 'multipolygon';
                 count--;
 
                 for (var i = 0; i < geo.coordinates.length; i++){
-                    // relations += '<member type="way" ref="' + count + '" role="outer"/>';
 
                     poly = polygon({
                         'coordinates': geo.coordinates[i]
-                    });
-
-                    console.log(poly['ids']);
-                    for (var a = 0; a < poly['ids'].length; a++) {
-                        relations += '<member type="way" ref="' + poly['ids'][a] + '" role="outer"/>';
-                    }
+                    }, undefined, true);
 
                     nodes += poly['nodes'];
                     ways += poly['ways'];
-                    extraRelations += poly['relations'];
+                    relations += poly['relations'];
                 }
 
                 relations += propertiesToTags(properties);
                 relations += '</relation>';
-                relations += extraRelations;
                 break;
-
         }
 
         function append(obj) {
@@ -76,30 +68,26 @@ var geo2osm = function(geo, changeset) {
         };
     }
 
-    function polygon(geo, properties) {
+    function polygon(geo, properties, multipolygon) {
         var nodes = '',
             ways = '',
             relations = '',
-            ids = [];
-                // simple polygon way ids are kept for relation members
+            role = '';
         properties = properties || {};
+        multipolygon = multipolygon || false;
 
         if (geo.coordinates.length > 1) {
             // polygon with holes -> multipolygon
-            relations += '<relation id="' + count + '" changeset="' + changeset +'">';
+            if (!multipolygon) relations += '<relation id="' + count + '" changeset="' + changeset +'">';
             count--;
             properties['type'] = 'multipolygon';
 
             for (var i = 0; i < geo.coordinates.length; i++) {
                 var coords = [];
 
-                relations += '<member type="way" ref="' + count + '" ';
-                if (i === 0) {
-                    relations += 'role="outer"/>';
-                } else {
-                    relations += 'role="inner"/>';
-                }
+                role = ((i === 0) ? 'outer' : 'inner');
 
+                relations += '<member type="way" ref="' + count + '" role="' + role + '"/>';
                 ways += '<way id="' + count + '" changeset="' + changeset + '">';
                 count--;
                 for (var a = 0; a < geo.coordinates[i].length-1; a++) {
@@ -111,13 +99,15 @@ var geo2osm = function(geo, changeset) {
                 ways += '</way>';
             }
 
-            relations += propertiesToTags(properties);
-            relations += '</relation>';
+            if (!multipolygon) {
+                relations += propertiesToTags(properties);
+                relations += '</relation>';
+            }
         } else {
             // polygon -> way
             var coords = [];
             ways += '<way id="' + count + '" changeset="' + changeset + '">';
-            ids.push(count);
+            if (multipolygon) relations += '<member type="way" ref="' + count + '" role="outer"/>';
             count--;
             for (var j = 0; j < geo.coordinates[0].length; j++) {
                 coords.push([geo.coordinates[0][j][1], geo.coordinates[0][j][0]]);
@@ -132,8 +122,7 @@ var geo2osm = function(geo, changeset) {
         return {
             'nodes': nodes,
             'ways': ways,
-            'relations': relations,
-            'ids': ids
+            'relations': relations
         };
     }
 
