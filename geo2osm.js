@@ -165,10 +165,24 @@ var geo2osm = function(geo, changeset) {
     switch (geo.type) {
         case 'FeatureCollection':
             if (geo.features) {
+                var temp = {
+                    'nodes': '',
+                    'ways': '',
+                    'relations': ''
+                };
                 obj = [];
                 for (var i = 0; i < geo.features.length; i++){
                     obj.push(togeojson(geo.features[i].geometry, geo.features[i].properties));
                 }
+                temp['osm'] = '<osm version="0.6" generator="geo2osm.js">';
+                for (var n = 0; n < obj.length; n++) {
+                    temp['nodes'] += obj[n]['nodes'];
+                    temp['ways'] += obj[n]['ways'];
+                    temp['relations'] += obj[n]['relations'];
+                }
+                temp['osm'] += temp['nodes'] + temp['ways'] + temp['relations'];
+                temp['osm'] += '</osm>';
+                obj = temp['osm'];
             } else {
                 console.log('Invalid GeoJSON object: FeatureCollection object missing \"features\" member.');
             }
