@@ -204,6 +204,7 @@ var geo2osm = function(geo, changeset) {
         case 'Feature':
             if (geo.properties && geo.geometry) {
                 obj = togeojson(geo.geometry, geo.properties);
+                obj = obj['osm'];
             } else {
                 console.log('Invalid GeoJSON object: Feature object missing \"properties\" or \"geometry\" member.');
             }
@@ -217,6 +218,7 @@ var geo2osm = function(geo, changeset) {
         case 'MultiPolygon':
             if (geo.coordinates) {
                 obj = togeojson(geo);
+                obj = obj['osm'];
             } else {
                 console.log('Invalid GeoJSON object: Geometry object missing \"coordinates\" member.');
             }
