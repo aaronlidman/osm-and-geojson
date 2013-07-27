@@ -27,96 +27,43 @@ var geo2osm = function(geo, changeset) {
             case 'MultiLineString':
                 break;
             case 'Polygon':
-                if (geo.coordinates.length > 1) {
-                    // polygon with holes -> multipolygon
-                    relations += '<relation id="' + count + '" changeset="' + changeset +'">';
-                    count--;
-                    properties['type'] = 'multipolygon';
-
-                    for (var i = 0; i < geo.coordinates.length; i++) {
-                        var coords = [];
-
-                        relations += '<member type="way" ref="' + count + '" ';
-                        if (i === 0) {
-                            relations += 'role="outer"/>';
-                        } else {
-                            relations += 'role="inner"/>';
-                        }
-
-                        ways += '<way id="' + count + '" changeset="' + changeset + '">';
-                        count--;
-                        for (var a = 0; a < geo.coordinates[i].length-1; a++) {
-                            coords.push([geo.coordinates[i][a][1], geo.coordinates[i][a][0]]);
-                        }
-                        coords = createNodes(coords, true);
-                        nodes += coords['nodes'];
-                        ways += coords['nds'];
-                        ways += '</way>';
-                    }
-
-                    relations += propertiesToTags(properties);
-                    relations += '</relation>';
-                } else {
-                    // polygon -> way
-                    var coords = [];
-                    ways += '<way id="' + count + '" changeset="' + changeset + '">';
-                    count--;
-                    for (var j = 0; j < geo.coordinates[0].length; j++) {
-                        coords.push([geo.coordinates[0][j][1], geo.coordinates[0][j][0]]);
-                    }
-                    coords = createNodes(coords, true);
-                    nodes += coords['nodes'];
-                    ways += coords['nds'];
-                    ways += propertiesToTags(properties);
-                    ways += '</way>';
-                }
+                append(polygon(geo, properties));
                 break;
 
             case 'MultiPolygon':
-                // need to better abstract this all so I can call on 'Polygon' from above
-                relations += '<relation id="' + count + '" changeset="' + changeset + '"';
-                relations += '<tag k="type" v="multipolygon" />';
+                var extraRelations = '';
+                relations += '<relation id="' + count + '" changeset="' + changeset + '">';
+                properties['type'] = 'multipolygon';
                 count--;
 
                 for (var i = 0; i < geo.coordinates.length; i++){
-                    relations += '<member type="way" ref="' + count + '" role="outer"/>';
+                    // relations += '<member type="way" ref="' + count + '" role="outer"/>';
 
-                    if (geo.coordinates[i].length > 1) {
-                        console.log('yea');
-                        // relation inside relation
-                        // this isn't going to work w/ string concat unless we restructure
-                        // multipolygon
-                        // build a way for outer and inners
-                        for (var j = 0; j < geo.coordinates[i].length; j++){
-                            // ways?
-                            for (var k = 0; k < geo.coordinates[i][j].length; k++){
-                                // actual coords
-                                coords.push([geo.coordinates[i][j][k][1], geo.coordinates[i][j][k][0]]);
-                            }
-                        }
+                    poly = polygon({
+                        'coordinates': geo.coordinates[i]
+                    });
 
-                    } else {
-
-                        var coords = [];
-                        ways += '<way id="' + count + '" changeset="' + changeset + '">';
-                        count--;
-
-                        for (var j = 0; j < geo.coordinates[i].length; j++) {
-                            coords.push([geo.coordinates[i][j][1], geo.coordinates[i][j][0]]);
-                        }
-
-                        coords = createNodes(coords, true);
-                        nodes += coords['nodes'];
-                        ways += coords['nds'];
-                        ways += '</way>';
+                    console.log(poly['ids']);
+                    for (var a = 0; a < poly['ids'].length; a++) {
+                        relations += '<member type="way" ref="' + poly['ids'][a] + '" role="outer"/>';
                     }
 
+                    nodes += poly['nodes'];
+                    ways += poly['ways'];
+                    extraRelations += poly['relations'];
                 }
 
                 relations += propertiesToTags(properties);
                 relations += '</relation>';
+                relations += extraRelations;
                 break;
 
+        }
+
+        function append(obj) {
+            nodes += obj['nodes'];
+            ways += obj['ways'];
+            relations += obj['relations'];
         }
 
         osm = '<osm version="0.6" generator="geo2osm.js">' + nodes + ways + relations + '</osm>';
@@ -126,6 +73,67 @@ var geo2osm = function(geo, changeset) {
             'ways': ways,
             'relations': relations,
             'osm': osm
+        };
+    }
+
+    function polygon(geo, properties) {
+        var nodes = '',
+            ways = '',
+            relations = '',
+            ids = [];
+                // simple polygon way ids are kept for relation members
+        properties = properties || {};
+
+        if (geo.coordinates.length > 1) {
+            // polygon with holes -> multipolygon
+            relations += '<relation id="' + count + '" changeset="' + changeset +'">';
+            count--;
+            properties['type'] = 'multipolygon';
+
+            for (var i = 0; i < geo.coordinates.length; i++) {
+                var coords = [];
+
+                relations += '<member type="way" ref="' + count + '" ';
+                if (i === 0) {
+                    relations += 'role="outer"/>';
+                } else {
+                    relations += 'role="inner"/>';
+                }
+
+                ways += '<way id="' + count + '" changeset="' + changeset + '">';
+                count--;
+                for (var a = 0; a < geo.coordinates[i].length-1; a++) {
+                    coords.push([geo.coordinates[i][a][1], geo.coordinates[i][a][0]]);
+                }
+                coords = createNodes(coords, true);
+                nodes += coords['nodes'];
+                ways += coords['nds'];
+                ways += '</way>';
+            }
+
+            relations += propertiesToTags(properties);
+            relations += '</relation>';
+        } else {
+            // polygon -> way
+            var coords = [];
+            ways += '<way id="' + count + '" changeset="' + changeset + '">';
+            ids.push(count);
+            count--;
+            for (var j = 0; j < geo.coordinates[0].length; j++) {
+                coords.push([geo.coordinates[0][j][1], geo.coordinates[0][j][0]]);
+            }
+            coords = createNodes(coords, true);
+            nodes += coords['nodes'];
+            ways += coords['nds'];
+            ways += propertiesToTags(properties);
+            ways += '</way>';
+        }
+
+        return {
+            'nodes': nodes,
+            'ways': ways,
+            'relations': relations,
+            'ids': ids
         };
     }
 
