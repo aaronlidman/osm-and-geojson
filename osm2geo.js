@@ -1,27 +1,4 @@
-/**************************************************************************
- *                 OSM2GEO - OSM to GeoJSON converter
- * OSM to GeoJSON converter takes in a .osm XML file as input and produces
- * corresponding GeoJSON object.
- *
- * AUTHOR: P.Arunmozhi <aruntheguy@gmail.com>
- * DATE  : 26 / Nov / 2011
- * LICENSE : WTFPL - Do What The Fuck You Want To Public License
- * LICENSE URL: http://sam.zoy.org/wtfpl/
- *
- * USAGE: This script contains a single function -> geojson osm2geo(osmXML)
- * It takes in a .osm (xml) as parameter and retruns the corresponding
- * GeoJson object.
- *
- * Quotes vary a bit (between single ' and double ") in order to stick to
- * strict JSON syntax.
- *
- * ***********************************************************************/
 var osm2geo = function(osm) {
-    var xml = parse(osm),
-        geo = {
-            "type" : "FeatureCollection",
-            "features" : []
-        };
 
     function parse(xml) {
         var string = new XMLSerializer().serializeToString(xml),
@@ -34,32 +11,48 @@ var osm2geo = function(osm) {
         var bbox = [];
 
         if (bounds.length) {
-            bbox.push(+bounds[0].getAttribute('minlon'));
-            bbox.push(+bounds[0].getAttribute('minlat'));
-            bbox.push(+bounds[0].getAttribute('maxlon'));
-            bbox.push(+bounds[0].getAttribute('maxlat'));
+            bbox = [
+                +bounds[0].getAttribute('minlon'),
+                +bounds[0].getAttribute('minlat'),
+                +bounds[0].getAttribute('maxlon'),
+                +bounds[0].getAttribute('maxlat')
+            ];
         }
 
         return bbox;
     }
 
-    geo.bbox = getBounds(xml.getElementsByTagName('bounds'));
+    // http://stackoverflow.com/a/1830844
+    function isNumber(n) {
+        return !isNaN(parseFloat(n)) && isFinite(n);
+    }
 
-    // set properties for a feature
-    function setProps(element){
-        var properties = {},
+    // set tags as properties
+    function setProps(element) {
+        var props = {},
             tags = element.getElementsByTagName('tag'),
             t = tags.length;
 
         while (t--) {
-            properties[tags[t].getAttribute('k')] = tags[t].getAttribute('v');
+            if (isNumber(tags[t].getAttribute('v'))) {
+                props[tags[t].getAttribute('k')] = +tags[t].getAttribute('v');
+            } else {
+                props[tags[t].getAttribute('k')] = tags[t].getAttribute('v');
+            }
         }
 
-        return properties;
+        // a few extra, possibly useful, properties
+        if (element.getAttribute('id')) props.osm_id = +element.getAttribute('id');
+        if (element.getAttribute('user')) props.osm_lastEditor = element.getAttribute('user');
+        if (element.getAttribute('version')) props.osm_version = +element.getAttribute('version');
+        if (element.getAttribute('changeset')) props.osm_lastChangeset = +element.getAttribute('changeset');
+        if (element.getAttribute('timestamp')) props.osm_lastEdited = element.getAttribute('timestamp');
+
+        return sortObject(props);
     }
 
     // create a feature of given type
-    function getFeature(element, type){
+    function getFeature(element, type) {
         return {
             "geometry" : {
                 "type" : type,
@@ -73,14 +66,16 @@ var osm2geo = function(osm) {
     function cacheNodes() {
         var nodes = xml.getElementsByTagName('node'),
             n = nodes.length,
-            coords = {};
+            coords = {},
             withTags = [];
 
         while (n--) {
             var tags = nodes[n].getElementsByTagName('tag');
 
-            coords[nodes[n].getAttribute('id')] =
-                [nodes[n].getAttribute('lon'), nodes[n].getAttribute('lat')];
+            coords[nodes[n].getAttribute('id')] = [
+                +nodes[n].getAttribute('lon'),
+                +nodes[n].getAttribute('lat')
+            ];
 
             if (tags.length) withTags.push(nodes[n]);
         }
@@ -91,15 +86,98 @@ var osm2geo = function(osm) {
         };
     }
 
-    var ways = xml.getElementsByTagName('way'),
+    function buildRelations() {
+        var relations = xml.getElementsByTagName('relation'),
+            r = relations.length,
+            features = [],
+            done = {},
+            count = 0;
+
+        while (r--) {
+            feature = getFeature(relations[r], "MultiPolygon");
+
+            if (feature.properties.type == 'multipolygon') {
+                feature.geometry.coordinates.push([]);
+
+                var members = relations[r].getElementsByTagName('member'),
+                    m = members.length;
+
+                while (m--) {
+                    done[members[m].getAttribute('ref')] = count;
+                    // feature.geometry.coordinates[0].push([]);
+
+                    // .getAttribute('role') stuff would go somewhere around here
+                }
+
+                delete feature.properties.type;
+                features[count] = feature;
+                count++;
+            } // might get to other types in the future
+        }
+
+        return {
+            features: features,
+            done: done
+        };
+    }
+
+    // http://stackoverflow.com/a/1359808
+    function sortObject(o) {
+        var sorted = {},
+        key, a = [];
+
+        for (key in o) {
+            if (o.hasOwnProperty(key)) {
+                a.push(key);
+            }
+        }
+
+        a.sort();
+
+        for (key = 0; key < a.length; key++) {
+            sorted[a[key]] = o[a[key]];
+        }
+        return sorted;
+    }
+
+    function Points() {
+        var points = nodesCache.withTags;
+
+        for (var p = 0, r = points.length; p < r; p += 1) {
+            var feature = getFeature(points[p], "Point");
+
+            feature.geometry.coordinates = [
+                +points[p].getAttribute('lon'),
+                +points[p].getAttribute('lat')
+            ];
+
+            geo.features.push(feature);
+        }
+    }
+
+
+    var xml = parse(osm),
+        geo = {
+            "type" : "FeatureCollection",
+            "features" : []
+        },
         nodesCache = cacheNodes();
 
-    var w = ways.length;
-    while (w--) {
+    geo.bbox = getBounds(xml.getElementsByTagName('bounds'));
+
+    Points();
+
+    // MultiPolygons
+    var relational = buildRelations(),
+        ways = xml.getElementsByTagName('way');
+
+    // Polygons/LineStrings
+
+    for (var w = 0, x = ways.length; w < x; w += 1) {
         var feature = {},
             nds = ways[w].getElementsByTagName('nd');
 
-        // If first and last nd are same, then its a polygon
+        // If first and last nd are the same then its a polygon
         if (nds[0].getAttribute('ref') === nds[nds.length-1].getAttribute('ref')) {
             feature = getFeature(ways[w], "Polygon");
             feature.geometry.coordinates.push([]);
@@ -111,7 +189,6 @@ var osm2geo = function(osm) {
         while (n--) {
             var cords = nodesCache.coords[nds[n].getAttribute('ref')];
 
-            // If polygon push it inside the cords[[]]
             if (feature.geometry.type === "Polygon") {
                 feature.geometry.coordinates[0].push(cords);
             } else {
@@ -119,20 +196,27 @@ var osm2geo = function(osm) {
             }
         }
 
-        geo.features.push(feature);
+        if (relational.done[ways[w].getAttribute('id')]) {
+            var relWay = relational.done[ways[w].getAttribute('id')];
+            relational.features[relWay].geometry.coordinates[0].push(feature.geometry.coordinates);
+
+            // transfer the way (polygon) properties over to the relation (multipolygon)
+            // no overwriting, relation tags take precedence
+            for (var wayProp in feature.properties) {
+                if (!relational.features[relWay].properties[wayProp]) {
+                    relational.features[relWay].properties[wayProp] = feature.properties[wayProp];
+                }
+            }
+        } else {
+            geo.features.push(feature);
+        }
     }
-    
-    var points = nodesCache.withTags;
 
-    var p = points.length;
-    while (p--) {
-        var feature = getFeature(points[p], "Point");
-
-        feature.geometry.coordinates.push(points[p].getAttribute('lon'));
-        feature.geometry.coordinates.push(points[p].getAttribute('lat'));
-
-        geo.features.push(feature);
+    var r = relational.features.length;
+    while (r--) {
+        geo.features.push(relational.features[r]);
     }
 
+    console.log(geo);
     return geo;
 };
