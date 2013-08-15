@@ -1,4 +1,4 @@
-var osm2geo = function(osm) {
+var osm2geo = function(osm, metaProperties) {
 
     function parse(xml) {
         var string = new XMLSerializer().serializeToString(xml),
@@ -42,11 +42,13 @@ var osm2geo = function(osm) {
         }
 
         // a few extra, possibly useful, properties
-        if (element.getAttribute('id')) props.osm_id = parseFloat(element.getAttribute('id'));
-        if (element.getAttribute('user')) props.osm_lastEditor = element.getAttribute('user');
-        if (element.getAttribute('version')) props.osm_version = parseFloat(element.getAttribute('version'));
-        if (element.getAttribute('changeset')) props.osm_lastChangeset = parseFloat(element.getAttribute('changeset'));
-        if (element.getAttribute('timestamp')) props.osm_lastEdited = element.getAttribute('timestamp');
+        if (metaProperties) {
+            if (element.getAttribute('id')) props.osm_id = parseFloat(element.getAttribute('id'));
+            if (element.getAttribute('user')) props.osm_lastEditor = element.getAttribute('user');
+            if (element.getAttribute('version')) props.osm_version = parseFloat(element.getAttribute('version'));
+            if (element.getAttribute('changeset')) props.osm_lastChangeset = parseFloat(element.getAttribute('changeset'));
+            if (element.getAttribute('timestamp')) props.osm_lastEdited = element.getAttribute('timestamp');
+        }
 
         return sortObject(props);
     }
