@@ -9,7 +9,6 @@ var osm2geo = function(osm, metaProperties) {
     // set the bounding box [minX,minY,maxX,maxY]; x -> long, y -> lat
     function getBounds(bounds) {
         var bbox = [];
-
         if (bounds.length) {
             bbox = [
                 parseFloat(bounds[0].getAttribute('minlon')),
@@ -18,7 +17,6 @@ var osm2geo = function(osm, metaProperties) {
                 parseFloat(bounds[0].getAttribute('maxlat'))
             ];
         }
-
         return bbox;
     }
 
@@ -30,10 +28,9 @@ var osm2geo = function(osm, metaProperties) {
     // set tags as properties
     function setProps(element) {
         var props = {},
-            tags = element.getElementsByTagName('tag'),
-            t = tags.length;
+            tags = element.getElementsByTagName('tag');
 
-        while (t--) {
+        for (var t = 0; t < tags.length; t++) {
             if (isNumber(tags[t].getAttribute('v'))) {
                 props[tags[t].getAttribute('k')] = parseFloat(tags[t].getAttribute('v'));
             } else {
@@ -67,11 +64,10 @@ var osm2geo = function(osm, metaProperties) {
 
     function cacheNodes() {
         var nodes = xml.getElementsByTagName('node'),
-            n = nodes.length,
             coords = {},
             withTags = [];
 
-        while (n--) {
+        for (var n = 0; n < nodes.length; n++) {
             var tags = nodes[n].getElementsByTagName('tag');
 
             coords[nodes[n].getAttribute('id')] = [
@@ -90,21 +86,18 @@ var osm2geo = function(osm, metaProperties) {
 
     function buildRelations() {
         var relations = xml.getElementsByTagName('relation'),
-            r = relations.length,
             features = [],
             done = {},
             count = 0;
 
-        while (r--) {
+        for (var r = 0; r < relations.length; r++) {
             feature = getFeature(relations[r], "MultiPolygon");
 
             if (feature.properties.type == 'multipolygon') {
                 feature.geometry.coordinates.push([]);
+                var members = relations[r].getElementsByTagName('member');
 
-                var members = relations[r].getElementsByTagName('member'),
-                    m = members.length;
-
-                while (m--) {
+                for (var m = 0; m < members.length; m++) {
                     done[members[m].getAttribute('ref')] = count;
                     // feature.geometry.coordinates[0].push([]);
 
@@ -127,15 +120,12 @@ var osm2geo = function(osm, metaProperties) {
     function sortObject(o) {
         var sorted = {},
         key, a = [];
-
         for (key in o) {
             if (o.hasOwnProperty(key)) {
                 a.push(key);
             }
         }
-
         a.sort();
-
         for (key = 0; key < a.length; key++) {
             sorted[a[key]] = o[a[key]];
         }
@@ -187,10 +177,8 @@ var osm2geo = function(osm, metaProperties) {
             feature = getFeature(ways[w], "LineString");
         }
 
-        var n = nds.length;
-        while (n--) {
+        for (var n = 0; n < nds.length; n++) {
             var cords = nodesCache.coords[nds[n].getAttribute('ref')];
-
             if (feature.geometry.type === "Polygon") {
                 feature.geometry.coordinates[0].push(cords);
             } else {
@@ -214,8 +202,7 @@ var osm2geo = function(osm, metaProperties) {
         }
     }
 
-    var r = relational.features.length;
-    while (r--) {
+    for (var r = 0; r < relational.features.length; r++) {
         geo.features.push(relational.features[r]);
     }
 
