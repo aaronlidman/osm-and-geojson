@@ -12,10 +12,10 @@ var osm2geo = function(osm) {
 
         if (bounds.length) {
             bbox = [
-                +bounds[0].getAttribute('minlon'),
-                +bounds[0].getAttribute('minlat'),
-                +bounds[0].getAttribute('maxlon'),
-                +bounds[0].getAttribute('maxlat')
+                parseFloat(bounds[0].getAttribute('minlon')),
+                parseFloat(bounds[0].getAttribute('minlat')),
+                parseFloat(bounds[0].getAttribute('maxlon')),
+                parseFloat(bounds[0].getAttribute('maxlat'))
             ];
         }
 
@@ -35,17 +35,17 @@ var osm2geo = function(osm) {
 
         while (t--) {
             if (isNumber(tags[t].getAttribute('v'))) {
-                props[tags[t].getAttribute('k')] = +tags[t].getAttribute('v');
+                props[tags[t].getAttribute('k')] = parseFloat(tags[t].getAttribute('v'));
             } else {
                 props[tags[t].getAttribute('k')] = tags[t].getAttribute('v');
             }
         }
 
         // a few extra, possibly useful, properties
-        if (element.getAttribute('id')) props.osm_id = +element.getAttribute('id');
+        if (element.getAttribute('id')) props.osm_id = parseFloat(element.getAttribute('id'));
         if (element.getAttribute('user')) props.osm_lastEditor = element.getAttribute('user');
-        if (element.getAttribute('version')) props.osm_version = +element.getAttribute('version');
-        if (element.getAttribute('changeset')) props.osm_lastChangeset = +element.getAttribute('changeset');
+        if (element.getAttribute('version')) props.osm_version = parseFloat(element.getAttribute('version'));
+        if (element.getAttribute('changeset')) props.osm_lastChangeset = parseFloat(element.getAttribute('changeset'));
         if (element.getAttribute('timestamp')) props.osm_lastEdited = element.getAttribute('timestamp');
 
         return sortObject(props);
@@ -73,8 +73,8 @@ var osm2geo = function(osm) {
             var tags = nodes[n].getElementsByTagName('tag');
 
             coords[nodes[n].getAttribute('id')] = [
-                +nodes[n].getAttribute('lon'),
-                +nodes[n].getAttribute('lat')
+                parseFloat(nodes[n].getAttribute('lon')),
+                parseFloat(nodes[n].getAttribute('lat'))
             ];
 
             if (tags.length) withTags.push(nodes[n]);
@@ -147,8 +147,8 @@ var osm2geo = function(osm) {
             var feature = getFeature(points[p], "Point");
 
             feature.geometry.coordinates = [
-                +points[p].getAttribute('lon'),
-                +points[p].getAttribute('lat')
+                parseFloat(points[p].getAttribute('lon')),
+                parseFloat(points[p].getAttribute('lat'))
             ];
 
             geo.features.push(feature);
