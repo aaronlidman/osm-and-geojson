@@ -59,7 +59,8 @@ var geo2osm = function(geo, changeset) {
             relations += obj['relations'];
         }
 
-        osm = '<osm version="0.6" generator="geo2osm.js">' + nodes + ways + relations + '</osm>';
+        osm = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="geo2osm.js">' +
+        nodes + ways + relations + '</osm>';
 
         return {
             'nodes': nodes,
@@ -187,7 +188,7 @@ var geo2osm = function(geo, changeset) {
                 for (var i = 0; i < geo.features.length; i++){
                     obj.push(togeojson(geo.features[i].geometry, geo.features[i].properties));
                 }
-                temp['osm'] = '<osm version="0.6" generator="geo2osm.js">';
+                temp['osm'] = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="geo2osm.js">';
                 for (var n = 0; n < obj.length; n++) {
                     temp['nodes'] += obj[n]['nodes'];
                     temp['ways'] += obj[n]['ways'];
