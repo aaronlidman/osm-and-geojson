@@ -191,13 +191,13 @@ var osm2geo = function(osm, metaProperties) {
                 console.log(position[0]);
                 relational.features[position[0]].geometry.coordinates[position[1]][position[2]] = feature.geometry.coordinates[0];
 
-                // // transfer the way properties over to the multipolygon
-                // // no overwriting, relation tags take precedence
-                // for (var wayProp in feature.properties) {
-                //     if (!relational.features[relWay].properties[wayProp]) {
-                //         relational.features[relWay].properties[wayProp] = feature.properties[wayProp];
-                //     }
-                // }
+                // transfer way properties over to the multipolygon, only outers are considered
+                // no overwriting, relation tags take precedence
+                for (var wayProp in feature.properties) {
+                    if (!relational.features[position[0]].properties[wayProp] && position[2] === 0) {
+                        relational.features[position[0]].properties[wayProp] = feature.properties[wayProp];
+                    }
+                }
             } else {
                 geo.features.push(feature);
             }
