@@ -1,11 +1,11 @@
 var osm2geo = function(osm, metaProperties) {
 
     function parse(xml) {
-        // should only serialize and parse if needed, right?
-            // is typeof (object/string) enough?
-        var string = new XMLSerializer().serializeToString(xml),
-            parser = new DOMParser();
-        return parser.parseFromString(string, 'text/xml');
+        if (typeof xml == 'string') {
+            var parser = new DOMParser();
+            xml = parser.parseFromString(xml, 'text/xml');
+        }
+        return xml;
     }
 
     function Bounds() {
