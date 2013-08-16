@@ -85,54 +85,6 @@ var osm2geo = function(osm, metaProperties) {
         };
     }
 
-    function buildRelations() {
-        var relations = xml.getElementsByTagName('relation'),
-            features = [],
-            done = {},
-            mpolyCount = 0;
-
-        for (var r = 0; r < relations.length; r++) {
-            feature = getFeature(relations[r], "MultiPolygon");
-
-            if (feature.properties.type == 'multipolygon') {
-                var members = relations[r].getElementsByTagName('member');
-                for (var m = 0; m < members.length; m++) {
-                    if (members[m].getAttribute('role') == 'outer') {
-                        feature.geometry.coordinates.push([[]]);
-                    } else {
-                        // how do you know which outer the inner goes with?
-                            // osm doesn't make a distinction, geojson does
-                        // polygon-in-polygon logic required?
-                        // right now I'm pushing all inners on the first outer
-                        if (!feature.geometry.coordinates[0]) {
-                            feature.geometry.coordinates.push([[]]);
-                            // this is lame, we can do better
-                        }
-                        feature.geometry.coordinates[0].push([]);
-                    }
-
-                    var length = feature.geometry.coordinates.length-1;
-                    done[members[m].getAttribute('ref')] = [
-                        mpolyCount,
-                        length,
-                        feature.geometry.coordinates[length].length-1
-                    ];
-                    // [index of multipolygon, index of polygon inside multi, index of coords in poly]
-                    // basically the exact location to insert the way into
-                }
-
-                delete feature.properties.type;
-                features.push(feature);
-                mpolyCount++;
-            } // might get to other types in the future
-        }
-
-        return {
-            features: features,
-            done: done
-        };
-    }
-
     // http://stackoverflow.com/a/1359808
     function sortObject(o) {
         var sorted = {},
@@ -150,7 +102,7 @@ var osm2geo = function(osm, metaProperties) {
     }
 
     function Points() {
-        var points = nodesCache.withTags;
+        var points = nodeCache.withTags;
 
         for (var p = 0, r = points.length; p < r; p += 1) {
             var feature = getFeature(points[p], "Point");
@@ -180,7 +132,7 @@ var osm2geo = function(osm, metaProperties) {
             }
 
             for (var n = 0; n < nds.length; n++) {
-                var cords = nodesCache.coords[nds[n].getAttribute('ref')];
+                var cords = nodeCache.coords[nds[n].getAttribute('ref')];
                 if (feature.geometry.type === "Polygon") {
                     feature.geometry.coordinates[0].push(cords);
                 } else {
@@ -190,6 +142,65 @@ var osm2geo = function(osm, metaProperties) {
 
             out[ways[w].getAttribute('id')] = feature;
         }
+
+        console.log(out);
+        return out;
+    }
+
+    function Relations() {
+        var relations = xml.getElementsByTagName('relation');
+
+        for (var r = 0; r < relations.length; r++) {
+            var feature = getFeature(relations[r], "MultiPolygon");
+
+            if (feature.properties.type == 'multipolygon') {
+                var members = relations[r].getElementsByTagName('member');
+
+                // osm doesn't keep roles in order, so we do this twice
+                for (var m = 0; m < members.length; m++) {
+                    if (members[m].getAttribute('role') == 'outer') {
+                        assignWay(members[m], 'outer');
+                    }
+                }
+
+                for (var n = 0; n < members.length; n++) {
+                    if (members[n].getAttribute('role') == 'inner') {
+                        assignWay(members[n], 'inner');
+                    }
+                }
+
+                delete feature.properties.type;
+            } else {
+                // more relation types here
+                // http://taginfo.openstreetmap.us/relations
+            }
+
+            if (feature.geometry.coordinates.length) geo.features.push(feature);
+        }
+
+        function assignWay(member, role) {
+            var ref = member.getAttribute('ref'),
+                way = wayCache[ref];
+
+            if (role == 'outer') {
+                feature.geometry.coordinates.push(way.geometry.coordinates);
+                if (way.properties) {
+                    // exterior polygon properties can move to the multipolygon
+                    // but multipolygon (relation) tags take precedence
+                    for (var prop in way.properties) {
+                        if (!feature.properties[prop]) {
+                            feature.properties[prop] = prop;
+                        }
+                    }
+                }
+            } else if (role == 'inner' ){
+                // todo
+                // fetch all the outers
+                // do a point in polygon lookup to figure out which outer it belongs to
+                feature.geometry.coordinates[0].push(way.geometry.coordinates[0]);
+            }
+        }
+
     }
 
     var xml = parse(osm),
@@ -197,19 +208,13 @@ var osm2geo = function(osm, metaProperties) {
             "type" : "FeatureCollection",
             "features" : []
         },
-        nodesCache = cacheNodes(),
+        nodeCache = cacheNodes(),
         wayCache = cacheWays();
 
     Bounds();
     Points();
-    var relational = buildRelations();
-    // should be able to remove buildRelations
-    // Relations();
+    Relations();
     // Ways();
-
-    for (var r = 0; r < relational.features.length; r++) {
-        geo.features.push(relational.features[r]);
-    }
 
     return geo;
 };
