@@ -181,36 +181,41 @@ var osm2geo = function(osm, metaProperties) {
             var ref = member.getAttribute('ref'),
                 way = wayCache[ref];
 
-            if (way && member.getAttribute('role') == 'outer') {
-                feature.geometry.coordinates.push(way.geometry.coordinates);
-                if (way.properties) {
-                    // exterior polygon properties can move to the multipolygon
-                    // but multipolygon (relation) tags take precedence
-                    for (var prop in way.properties) {
-                        if (!feature.properties[prop]) {
-                            feature.properties[prop] = prop;
+            if (way && way.geometry.type == 'Polygon') {
+                if (member.getAttribute('role') == 'outer') {
+                    feature.geometry.coordinates.push(way.geometry.coordinates);
+                    if (way.properties) {
+                        // exterior polygon properties can move to the multipolygon
+                        // but multipolygon (relation) tags take precedence
+                        for (var prop in way.properties) {
+                            if (!feature.properties[prop]) {
+                                feature.properties[prop] = prop;
+                            }
                         }
                     }
-                }
-            } else if (way && member.getAttribute('role') == 'inner'){
-                if (feature.geometry.coordinates.length > 1) {
-                    // do a point in polygon against each outer
-                    // this determines which outer the inner goes with
-                    for (var a = 0; a < feature.geometry.coordinates.length; a++) {
-                        if (pointInPolygon(
-                                way.geometry.coordinates[0][0],
-                                feature.geometry.coordinates[a][0])
-                        ) {
-                            feature.geometry.coordinates[a].push(way.geometry.coordinates[0]);
-                            break;
+                    wayCache[ref] = false;
+                } else if (member.getAttribute('role') == 'inner'){
+                    if (feature.geometry.coordinates.length > 1) {
+                        // do a point in polygon against each outer
+                        // this determines which outer the inner goes with
+                        for (var a = 0; a < feature.geometry.coordinates.length; a++) {
+                            if (pointInPolygon(
+                                    way.geometry.coordinates[0][0],
+                                    feature.geometry.coordinates[a][0])
+                            ) {
+                                feature.geometry.coordinates[a].push(way.geometry.coordinates[0]);
+                                wayCache[ref] = false;
+                                break;
+                            }
+                        }
+                    } else {
+                        if (feature.geometry.coordinates.length) {
+                            feature.geometry.coordinates[0].push(way.geometry.coordinates[0]);
+                            wayCache[ref] = false;
                         }
                     }
-                } else {
-                    feature.geometry.coordinates[0].push(way.geometry.coordinates[0]);
                 }
             }
-
-            wayCache[ref] = false;
         }
     }
 
