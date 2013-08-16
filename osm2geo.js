@@ -1,14 +1,16 @@
 var osm2geo = function(osm, metaProperties) {
 
     function parse(xml) {
+        // should only serialize and parse if needed, right?
+            // is typeof (object/string) enough?
         var string = new XMLSerializer().serializeToString(xml),
             parser = new DOMParser();
         return parser.parseFromString(string, 'text/xml');
     }
 
-    // set the bounding box [minX,minY,maxX,maxY]; x -> long, y -> lat
-    function getBounds(bounds) {
-        var bbox = [];
+    function Bounds() {
+        var bounds = xml.getElementsByTagName('bounds'),
+            bbox = [];
         if (bounds.length) {
             bbox = [
                 parseFloat(bounds[0].getAttribute('minlon')),
@@ -17,7 +19,7 @@ var osm2geo = function(osm, metaProperties) {
                 parseFloat(bounds[0].getAttribute('maxlat'))
             ];
         }
-        return bbox;
+        geo.bbox = bbox;
     }
 
     // http://stackoverflow.com/a/1830844
@@ -26,7 +28,7 @@ var osm2geo = function(osm, metaProperties) {
     }
 
     // set tags as properties
-    function setProps(element) {
+    function setProperties(element) {
         var props = {},
             tags = element.getElementsByTagName('tag');
 
@@ -50,7 +52,6 @@ var osm2geo = function(osm, metaProperties) {
         return sortObject(props);
     }
 
-    // create a feature of given type
     function getFeature(element, type) {
         return {
             "geometry" : {
@@ -58,7 +59,7 @@ var osm2geo = function(osm, metaProperties) {
                 "coordinates" : []
             },
             "type" : "Feature",
-            "properties" : setProps(element)
+            "properties" : setProperties(element)
         };
     }
 
@@ -94,24 +95,37 @@ var osm2geo = function(osm, metaProperties) {
             feature = getFeature(relations[r], "MultiPolygon");
 
             if (feature.properties.type == 'multipolygon') {
-                feature.geometry.coordinates.push([]);
                 var members = relations[r].getElementsByTagName('member');
-
                 for (var m = 0; m < members.length; m++) {
-                    done[members[m].getAttribute('ref')] = count;
-                    // feature.geometry.coordinates[0].push([]);
+                    if (members[m].getAttribute('role') == 'outer') {
+                        feature.geometry.coordinates.push([[parseFloat(members[m].getAttribute('ref'))]]);
+                    } else {
+                        // how do I know which outer the inner goes with?
+                            // osm doesn't make a distinction, geojson does
+                        // polygon-in-polygon logic required?
+                        // right now I'm pushing all inners on the first outer
+                        feature.geometry.coordinates[0].push([parseFloat(members[m].getAttribute('ref'))]);
+                    }
 
-                    // .getAttribute('role') stuff would go somewhere around here
+                    var length = feature.geometry.coordinates.length-1;
+                    done[members[m].getAttribute('ref')] = [
+                        r,
+                        length,
+                        feature.geometry.coordinates[length].length-1
+                    ];
+                    // [index of multipolygon, index of polygon inside multi, index of coords in poly]
                 }
 
                 delete feature.properties.type;
-                features[count] = feature;
-                count++;
+                features.push(feature);
             } // might get to other types in the future
         }
 
+        console.log(done);
+
         return {
             features: features,
+                // push directly to main?
             done: done
         };
     }
@@ -147,6 +161,46 @@ var osm2geo = function(osm, metaProperties) {
         }
     }
 
+    function Ways() {
+        // polygons and linestrings
+        var ways = xml.getElementsByTagName('way');
+        for (var w = 0; w < ways.length; w++) {
+            var feature = {},
+                nds = ways[w].getElementsByTagName('nd');
+
+            if (nds[0].getAttribute('ref') === nds[nds.length-1].getAttribute('ref')) {
+                feature = getFeature(ways[w], "Polygon");
+                feature.geometry.coordinates.push([]);
+            } else {
+                feature = getFeature(ways[w], "LineString");
+            }
+
+            for (var n = 0; n < nds.length; n++) {
+                var cords = nodesCache.coords[nds[n].getAttribute('ref')];
+                if (feature.geometry.type === "Polygon") {
+                    feature.geometry.coordinates[0].push(cords);
+                } else {
+                    feature.geometry.coordinates.push(cords);
+                }
+            }
+
+            if (relational.done[ways[w].getAttribute('id')]) {
+                // now place that way in the right 
+                // var relWay = relational.done[ways[w].getAttribute('id')];
+                // relational.features[relWay].geometry.coordinates[0].push(feature.geometry.coordinates);
+
+                // // transfer the way properties over to the multipolygon
+                // // no overwriting, relation tags take precedence
+                // for (var wayProp in feature.properties) {
+                //     if (!relational.features[relWay].properties[wayProp]) {
+                //         relational.features[relWay].properties[wayProp] = feature.properties[wayProp];
+                //     }
+                // }
+            } else {
+                geo.features.push(feature);
+            }
+        }
+    }
 
     var xml = parse(osm),
         geo = {
@@ -155,57 +209,17 @@ var osm2geo = function(osm, metaProperties) {
         },
         nodesCache = cacheNodes();
 
-    geo.bbox = getBounds(xml.getElementsByTagName('bounds'));
-
+    Bounds();
     Points();
 
-    // MultiPolygons
-    var relational = buildRelations(),
-        ways = xml.getElementsByTagName('way');
+    var relational = buildRelations();
 
-    // Polygons/LineStrings
-
-    for (var w = 0, x = ways.length; w < x; w += 1) {
-        var feature = {},
-            nds = ways[w].getElementsByTagName('nd');
-
-        // If first and last nd are the same then its a polygon
-        if (nds[0].getAttribute('ref') === nds[nds.length-1].getAttribute('ref')) {
-            feature = getFeature(ways[w], "Polygon");
-            feature.geometry.coordinates.push([]);
-        } else {
-            feature = getFeature(ways[w], "LineString");
-        }
-
-        for (var n = 0; n < nds.length; n++) {
-            var cords = nodesCache.coords[nds[n].getAttribute('ref')];
-            if (feature.geometry.type === "Polygon") {
-                feature.geometry.coordinates[0].push(cords);
-            } else {
-                feature.geometry.coordinates.push(cords);
-            }
-        }
-
-        if (relational.done[ways[w].getAttribute('id')]) {
-            var relWay = relational.done[ways[w].getAttribute('id')];
-            relational.features[relWay].geometry.coordinates[0].push(feature.geometry.coordinates);
-
-            // transfer the way (polygon) properties over to the relation (multipolygon)
-            // no overwriting, relation tags take precedence
-            for (var wayProp in feature.properties) {
-                if (!relational.features[relWay].properties[wayProp]) {
-                    relational.features[relWay].properties[wayProp] = feature.properties[wayProp];
-                }
-            }
-        } else {
-            geo.features.push(feature);
-        }
-    }
+    Ways();
 
     for (var r = 0; r < relational.features.length; r++) {
         geo.features.push(relational.features[r]);
     }
 
-    console.log(geo);
+    // console.log(JSON.stringify(geo));
     return geo;
 };
