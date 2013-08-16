@@ -164,9 +164,10 @@ var osm2geo = function(osm, metaProperties) {
         }
     }
 
-    function Ways() {
-        // polygons and linestrings
-        var ways = xml.getElementsByTagName('way');
+    function cacheWays() {
+        var ways = xml.getElementsByTagName('way'),
+            out = {};
+
         for (var w = 0; w < ways.length; w++) {
             var feature = {},
                 nds = ways[w].getElementsByTagName('nd');
@@ -187,20 +188,7 @@ var osm2geo = function(osm, metaProperties) {
                 }
             }
 
-            if (relational.done[ways[w].getAttribute('id')]) {
-                position = relational.done[ways[w].getAttribute('id')];
-                relational.features[position[0]].geometry.coordinates[position[1]][position[2]] = feature.geometry.coordinates[0];
-
-                // transfer way properties over to the multipolygon, only outers are considered
-                // no overwriting, relation tags take precedence
-                for (var wayProp in feature.properties) {
-                    if (!relational.features[position[0]].properties[wayProp] && position[2] === 0) {
-                        relational.features[position[0]].properties[wayProp] = feature.properties[wayProp];
-                    }
-                }
-            } else {
-                geo.features.push(feature);
-            }
+            out[ways[w].getAttribute('id')] = feature;
         }
     }
 
@@ -209,12 +197,15 @@ var osm2geo = function(osm, metaProperties) {
             "type" : "FeatureCollection",
             "features" : []
         },
-        nodesCache = cacheNodes();
+        nodesCache = cacheNodes(),
+        wayCache = cacheWays();
 
     Bounds();
     Points();
     var relational = buildRelations();
-    Ways();
+    // should be able to remove buildRelations
+    // Relations();
+    // Ways();
 
     for (var r = 0; r < relational.features.length; r++) {
         geo.features.push(relational.features[r]);
