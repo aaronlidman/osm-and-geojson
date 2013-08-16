@@ -143,7 +143,6 @@ var osm2geo = function(osm, metaProperties) {
             out[ways[w].getAttribute('id')] = feature;
         }
 
-        console.log(out);
         return out;
     }
 
@@ -194,13 +193,22 @@ var osm2geo = function(osm, metaProperties) {
                     }
                 }
             } else if (role == 'inner' ){
-                // todo
-                // fetch all the outers
-                // do a point in polygon lookup to figure out which outer it belongs to
+                // todo:
+                    // fetch all the outers
+                    // do a point in polygon lookup to figure out which outer it belongs to
                 feature.geometry.coordinates[0].push(way.geometry.coordinates[0]);
             }
-        }
 
+            wayCache[ref] = false;
+        }
+    }
+
+    function Ways() {
+        for (var w in wayCache) {
+            if (wayCache[w]) {
+                geo.features.push(wayCache[w]);
+            }
+        }
     }
 
     var xml = parse(osm),
@@ -214,7 +222,7 @@ var osm2geo = function(osm, metaProperties) {
     Bounds();
     Points();
     Relations();
-    // Ways();
+    Ways();
 
     return geo;
 };
