@@ -89,7 +89,7 @@ var osm2geo = function(osm, metaProperties) {
         var relations = xml.getElementsByTagName('relation'),
             features = [],
             done = {},
-            count = 0;
+            mpolyCount = 0;
 
         for (var r = 0; r < relations.length; r++) {
             feature = getFeature(relations[r], "MultiPolygon");
@@ -98,34 +98,36 @@ var osm2geo = function(osm, metaProperties) {
                 var members = relations[r].getElementsByTagName('member');
                 for (var m = 0; m < members.length; m++) {
                     if (members[m].getAttribute('role') == 'outer') {
-                        feature.geometry.coordinates.push([[parseFloat(members[m].getAttribute('ref'))]]);
+                        feature.geometry.coordinates.push([[]]);
                     } else {
-                        // how do I know which outer the inner goes with?
+                        // how do you know which outer the inner goes with?
                             // osm doesn't make a distinction, geojson does
                         // polygon-in-polygon logic required?
                         // right now I'm pushing all inners on the first outer
-                        feature.geometry.coordinates[0].push([parseFloat(members[m].getAttribute('ref'))]);
+                        feature.geometry.coordinates[0].push([]);
                     }
 
                     var length = feature.geometry.coordinates.length-1;
                     done[members[m].getAttribute('ref')] = [
-                        r,
+                        mpolyCount,
                         length,
                         feature.geometry.coordinates[length].length-1
                     ];
                     // [index of multipolygon, index of polygon inside multi, index of coords in poly]
+                    // basically the exact location to insert the way into
                 }
 
                 delete feature.properties.type;
                 features.push(feature);
+                mpolyCount++;
             } // might get to other types in the future
         }
 
+        console.log(features);
         console.log(done);
 
         return {
             features: features,
-                // push directly to main?
             done: done
         };
     }
@@ -185,9 +187,9 @@ var osm2geo = function(osm, metaProperties) {
             }
 
             if (relational.done[ways[w].getAttribute('id')]) {
-                // now place that way in the right 
-                // var relWay = relational.done[ways[w].getAttribute('id')];
-                // relational.features[relWay].geometry.coordinates[0].push(feature.geometry.coordinates);
+                position = relational.done[ways[w].getAttribute('id')];
+                console.log(position[0]);
+                relational.features[position[0]].geometry.coordinates[position[1]][position[2]] = feature.geometry.coordinates[0];
 
                 // // transfer the way properties over to the multipolygon
                 // // no overwriting, relation tags take precedence
