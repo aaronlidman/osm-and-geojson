@@ -158,13 +158,13 @@ var osm2geo = function(osm, metaProperties) {
                 // osm doesn't keep roles in order, so we do this twice
                 for (var m = 0; m < members.length; m++) {
                     if (members[m].getAttribute('role') == 'outer') {
-                        assignWay(members[m], 'outer');
+                        assignWay(members[m]);
                     }
                 }
 
                 for (var n = 0; n < members.length; n++) {
                     if (members[n].getAttribute('role') == 'inner') {
-                        assignWay(members[n], 'inner');
+                        assignWay(members[n]);
                     }
                 }
 
@@ -177,11 +177,11 @@ var osm2geo = function(osm, metaProperties) {
             if (feature.geometry.coordinates.length) geo.features.push(feature);
         }
 
-        function assignWay(member, role) {
+        function assignWay(member) {
             var ref = member.getAttribute('ref'),
                 way = wayCache[ref];
 
-            if (role == 'outer') {
+            if (way && member.getAttribute('role') == 'outer') {
                 feature.geometry.coordinates.push(way.geometry.coordinates);
                 if (way.properties) {
                     // exterior polygon properties can move to the multipolygon
@@ -192,11 +192,22 @@ var osm2geo = function(osm, metaProperties) {
                         }
                     }
                 }
-            } else if (role == 'inner' ){
-                // todo:
-                    // fetch all the outers
-                    // do a point in polygon lookup to figure out which outer it belongs to
-                feature.geometry.coordinates[0].push(way.geometry.coordinates[0]);
+            } else if (way && member.getAttribute('role') == 'inner'){
+                if (feature.geometry.coordinates.length > 1) {
+                    // do a point in polygon against each outer
+                    // this determines which outer the inner goes with
+                    for (var a = 0; a < feature.geometry.coordinates.length; a++) {
+                        if (pointInPolygon(
+                                way.geometry.coordinates[0][0],
+                                feature.geometry.coordinates[a][0])
+                        ) {
+                            feature.geometry.coordinates[a].push(way.geometry.coordinates[0]);
+                            break;
+                        }
+                    }
+                } else {
+                    feature.geometry.coordinates[0].push(way.geometry.coordinates[0]);
+                }
             }
 
             wayCache[ref] = false;
@@ -209,6 +220,23 @@ var osm2geo = function(osm, metaProperties) {
                 geo.features.push(wayCache[w]);
             }
         }
+    }
+
+    // https://github.com/substack/point-in-polygon/blob/master/index.js
+    function pointInPolygon(point, vs) {
+        var x = point[0], y = point[1];
+        
+        var inside = false;
+        for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
+            var xi = vs[i][0], yi = vs[i][1];
+            var xj = vs[j][0], yj = vs[j][1];
+            
+            var intersect = ((yi > y) != (yj > y))
+                && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+            if (intersect) inside = !inside;
+        }
+        
+        return inside;
     }
 
     var xml = parse(osm),
