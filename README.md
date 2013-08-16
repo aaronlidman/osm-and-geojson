@@ -20,3 +20,6 @@ original OSM2GEO | this version | difference
 - usage: include `geo2osm.js` then use `geo2osm(geojsonString);`
 - __warning__: only points, polygons, and multipolygons (standalone or in feature collections) are supported right now
     - it would be pretty easy to add the rest, I just don't have a need for them right now
+
+
+###[WTFPL License](http://en.wikipedia.org/wiki/WTFPL)
