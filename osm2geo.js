@@ -104,6 +104,10 @@ var osm2geo = function(osm, metaProperties) {
                             // osm doesn't make a distinction, geojson does
                         // polygon-in-polygon logic required?
                         // right now I'm pushing all inners on the first outer
+                        if (!feature.geometry.coordinates[0]) {
+                            feature.geometry.coordinates.push([[]]);
+                            // this is lame, we can do better
+                        }
                         feature.geometry.coordinates[0].push([]);
                     }
 
@@ -122,9 +126,6 @@ var osm2geo = function(osm, metaProperties) {
                 mpolyCount++;
             } // might get to other types in the future
         }
-
-        console.log(features);
-        console.log(done);
 
         return {
             features: features,
@@ -188,7 +189,6 @@ var osm2geo = function(osm, metaProperties) {
 
             if (relational.done[ways[w].getAttribute('id')]) {
                 position = relational.done[ways[w].getAttribute('id')];
-                console.log(position[0]);
                 relational.features[position[0]].geometry.coordinates[position[1]][position[2]] = feature.geometry.coordinates[0];
 
                 // transfer way properties over to the multipolygon, only outers are considered
@@ -213,15 +213,12 @@ var osm2geo = function(osm, metaProperties) {
 
     Bounds();
     Points();
-
     var relational = buildRelations();
-
     Ways();
 
     for (var r = 0; r < relational.features.length; r++) {
         geo.features.push(relational.features[r]);
     }
 
-    // console.log(JSON.stringify(geo));
     return geo;
 };
