@@ -1,26 +1,23 @@
-###osm2geo.js
-- Converts OSM xml to GeoJSON
-- usage: include `osm2geo.js` then use `osm2geo(osmString);`
-    - (optional) add `true` as a second argument `osm2geo(osmString, true)` to include metadata about the item in the properties, namespaced `osm_*`
-- This is a fork of [OSM2GEO by tecoholic](https://gist.github.com/tecoholic/1396990) with some improvements.
-    - removed jQuery dependency, vanilla JS
+## OSM & GeoJSON
+
+- Converts [OSM XML](http://wiki.openstreetmap.org/wiki/OSM_XML) to [GeoJSON](http://www.geojson.org/)
+- Also converts the inverse, GeoJSON to OSM XML
+- This is a fork of [OSM2GEO by tecoholic](https://gist.github.com/tecoholic/1396990) with some improvements
+    - vanilla JS, no dependencies
     - multipolygon support
-    - faster
+    - browser or nodejs
+- __warning:__ When converting GeoJSON to OSM XML only points, polygons, and multipolygons (standalone or in feature collections) are supported right now
 
-original OSM2GEO | this version | difference
---- | --- | ---
-299.013ms   | 21.145ms  | +14.14x 
-11476.108ms | 123.353ms | +93.03x (~5 square miles)
-843.194ms   | 37.430ms  | +22.53x
-1463.834ms  | 47.444ms  | +30.85x
-431.721ms   | 28.938ms  | +14.92x
-(using random areas around Los Angeles County from xapi)
+## Usage
+- for the browser
+    - `<script src='osm_geojson.js'></script>`
+- for nodejs
+    - `npm install osm-and-geojson`
 
-###geo2osm.js
-- Converts GeoJSON to OSM xml
-- usage: include `geo2osm.js` then use `geo2osm(geojsonString);`
-- __warning__: only points, polygons, and multipolygons (standalone or in feature collections) are supported right now
-    - it would be pretty easy to add the rest, I just don't have a need for them right now
+## API
 
+- ####`osm_geojson.osm2geojson(osmXmlStringOrDOM)`
+    - Parse and convert a string of OSM XML to a GeoJSON object. Add an optional second argument of `true`, `osm_geojson.osm2geojson(yourOsm, true)` to include metadata about the item in the properties, namespaced `osm_*`.
 
-###[WTFPL License](http://en.wikipedia.org/wiki/WTFPL)
+- ####`osm_geojson.geojson2osm(GeoJSONObject)`
+    - Parse and convert a GeoJSON object into OSM XML.
