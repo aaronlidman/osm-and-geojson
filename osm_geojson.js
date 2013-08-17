@@ -374,31 +374,35 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
             var ref = attr(member, 'ref'),
                 way = wayCache[ref];
 
-            if (way && attr(member, 'role') == 'outer') {
-                feature.geometry.coordinates.push(way.geometry.coordinates);
-                if (way.properties) {
-                    // exterior polygon properties can move to the multipolygon
-                    // but multipolygon (relation) tags take precedence
-                    for (var prop in way.properties) {
-                        if (!feature.properties[prop]) {
-                            feature.properties[prop] = prop;
+            if (way && way.geometry.type == 'Polygon') {
+                if (way && attr(member, 'role') == 'outer') {
+                    feature.geometry.coordinates.push(way.geometry.coordinates);
+                    if (way.properties) {
+                        // exterior polygon properties can move to the multipolygon
+                        // but multipolygon (relation) tags take precedence
+                        for (var prop in way.properties) {
+                            if (!feature.properties[prop]) {
+                                feature.properties[prop] = prop;
+                            }
                         }
                     }
-                }
-            } else if (way && attr(member, 'role') == 'inner'){
-                if (feature.geometry.coordinates.length > 1) {
-                    // do a point in polygon against each outer
-                    // this determines which outer the inner goes with
-                    for (var a = 0; a < feature.geometry.coordinates.length; a++) {
-                        if (pointInPolygon(
-                            way.geometry.coordinates[0][0],
-                            feature.geometry.coordinates[a][0])) {
-                            feature.geometry.coordinates[a].push(way.geometry.coordinates[0]);
-                            break;
+                } else if (way && attr(member, 'role') == 'inner'){
+                    if (feature.geometry.coordinates.length > 1) {
+                        // do a point in polygon against each outer
+                        // this determines which outer the inner goes with
+                        for (var a = 0; a < feature.geometry.coordinates.length; a++) {
+                            if (pointInPolygon(
+                                way.geometry.coordinates[0][0],
+                                feature.geometry.coordinates[a][0])) {
+                                feature.geometry.coordinates[a].push(way.geometry.coordinates[0]);
+                                break;
+                            }
+                        }
+                    } else {
+                        if (feature.geometry.coordinates.length) {
+                            feature.geometry.coordinates[0].push(way.geometry.coordinates[0]);
                         }
                     }
-                } else {
-                    feature.geometry.coordinates[0].push(way.geometry.coordinates[0]);
                 }
             }
 
