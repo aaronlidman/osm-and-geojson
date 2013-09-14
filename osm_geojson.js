@@ -324,12 +324,15 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
             }
 
             for (var n = 0; n < nds.length; n++) {
-                var cords = lonLat(nodeCache[attr(nds[n], 'ref')]);
-                usedCoords[attr(nds[n], 'ref')] = true;
-                if (feature.geometry.type === 'Polygon') {
-                    feature.geometry.coordinates[0].push(cords);
-                } else {
-                    feature.geometry.coordinates.push(cords);
+                var node = nodeCache[attr(nds[n], 'ref')];
+                if (node) {
+                    var cords = lonLat(node);
+                    usedCoords[attr(nds[n], 'ref')] = true;
+                    if (feature.geometry.type === 'Polygon') {
+                        feature.geometry.coordinates[0].push(cords);
+                    } else {
+                        feature.geometry.coordinates.push(cords);
+                    }
                 }
             }
 
