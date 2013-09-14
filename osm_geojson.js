@@ -54,7 +54,7 @@ osm_geojson.geojson2osm = function(geo, changeset) {
             relations += obj.relations;
         }
 
-        osm = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="geo2osm.js">' +
+        osm = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="github.com/aaronlidman/osm-and-geojson">' +
         nodes + ways + relations + '</osm>';
 
         return {
@@ -163,6 +163,8 @@ osm_geojson.geojson2osm = function(geo, changeset) {
         return {'nds': nds, 'nodes': nodes};
     }
 
+    if (typeof geo === 'string') geo = JSON.parse(geo);
+
     var obj,
         count = -1;
     changeset = changeset || false;
@@ -178,7 +180,7 @@ osm_geojson.geojson2osm = function(geo, changeset) {
             for (var i = 0; i < geo.features.length; i++){
                 obj.push(togeojson(geo.features[i].geometry, geo.features[i].properties));
             }
-            temp.osm = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="geo2osm.js">';
+            temp.osm = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="github.com/aaronlidman/osm-and-geojson">';
             for (var n = 0; n < obj.length; n++) {
                 temp.nodes += obj[n].nodes;
                 temp.ways += obj[n].ways;
@@ -212,7 +214,7 @@ osm_geojson.geojson2osm = function(geo, changeset) {
             break;
 
         default:
-            if (console) console.log('Invalid GeoJSON object: GeoJSON object must be one of \"Point\", \"LineString\",' +
+            if (console) console.log('Invalid GeoJSON object: GeoJSON object must be one of \"Point\", \"LineString\", ' +
                 '\"Polygon\", \"MultiPolygon\", \"Feature\", \"FeatureCollection\" or \"GeometryCollection\".');
     }
 
