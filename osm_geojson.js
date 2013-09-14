@@ -222,21 +222,21 @@ osm_geojson.geojson2osm = function(geo, changeset) {
 osm_geojson.osm2geojson = function(osm, metaProperties) {
 
     var xml = parse(osm),
+        usedCoords = {},
         nodeCache = cacheNodes(),
         wayCache = cacheWays();
 
     return Bounds({
         type : 'FeatureCollection',
         features : []
-            .concat(Points(nodeCache))
             .concat(Ways(wayCache))
             .concat(Ways(Relations))
+            .concat(Points(nodeCache))
     }, xml);
 
     function parse(xml) {
         if (typeof xml !== 'string') return xml;
-        return (new DOMParser()).parseFromString(
-            new XMLSerializer().serializeToString(xml), 'text/xml');
+        return (new DOMParser()).parseFromString(xml, 'text/xml');
     }
 
     function Bounds(geo, xml) {
@@ -252,6 +252,8 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
     }
 
     function setProperties(element) {
+        if (!element) return {};
+
         var props = {},
             tags = element.getElementsByTagName('tag'),
             tags_length = tags.length;
@@ -309,6 +311,13 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
             features.push(feature);
         }
 
+        if (Object.keys(usedCoords).length !== Object.keys(nodeCache.coords).length) {
+            for (var coord in nodeCache.coords) {
+                if (!usedCoords[coord])
+                    features.push(getFeature(false, 'Point', nodeCache.coords[coord]));
+            }
+        }
+
         return features;
     }
 
@@ -328,6 +337,7 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
 
             for (var n = 0; n < nds.length; n++) {
                 var cords = nodeCache.coords[attr(nds[n], 'ref')];
+                usedCoords[attr(nds[n], 'ref')] = true;
                 if (feature.geometry.type === 'Polygon') {
                     feature.geometry.coordinates[0].push(cords);
                 } else {
