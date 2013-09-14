@@ -287,35 +287,23 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
 
     function cacheNodes() {
         var nodes = getBy(xml, 'node'),
-            coords = {},
-            withTags = [];
+            coords = {};
 
         for (var n = 0; n < nodes.length; n++) {
-            var tags = getBy(nodes[n], 'tag');
-            coords[attr(nodes[n], 'id')] = lonLat(nodes[n]);
-            if (tags.length) withTags.push(nodes[n]);
+            coords[attr(nodes[n], 'id')] = nodes[n];
         }
 
-        return {
-            coords: coords,
-            withTags: withTags
-        };
+        return coords;
     }
 
     function Points(nodeCache) {
-        var points = nodeCache.withTags,
+        var points = nodeCache,
             features = [];
 
-        for (var p = 0, r = points.length; p < r; p++) {
-            var feature = getFeature(points[p], 'Point', lonLat(points[p]));
-            features.push(feature);
-        }
-
-        if (Object.keys(usedCoords).length !== Object.keys(nodeCache.coords).length) {
-            for (var coord in nodeCache.coords) {
-                if (!usedCoords[coord])
-                    features.push(getFeature(false, 'Point', nodeCache.coords[coord]));
-            }
+        for (var node in nodeCache) {
+            var tags = getBy(nodeCache[node], 'tag');
+            if (!usedCoords[node] || tags.length)
+                features.push(getFeature(nodeCache[node], 'Point', lonLat(nodeCache[node])));
         }
 
         return features;
@@ -336,7 +324,7 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
             }
 
             for (var n = 0; n < nds.length; n++) {
-                var cords = nodeCache.coords[attr(nds[n], 'ref')];
+                var cords = lonLat(nodeCache[attr(nds[n], 'ref')]);
                 usedCoords[attr(nds[n], 'ref')] = true;
                 if (feature.geometry.type === 'Polygon') {
                     feature.geometry.coordinates[0].push(cords);
