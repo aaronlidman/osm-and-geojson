@@ -50,7 +50,7 @@
             background: white;
             border: 1px solid #ccc;
             height: 320px;
-            overflow: scroll;
+            overflow: auto;
             margin-bottom: 20px;
         }
 
@@ -120,6 +120,7 @@
             font-weight: bold;
             font-size: 32px;
         }
+        .disc { list-style: disc; }
     </style>
 </head>
 <body>
@@ -150,6 +151,20 @@
                 <li>For nodejs:
                     <ul>
                         <li><code>npm install osm-and-geojson</code></li>
+                    </ul>
+                </li>
+            </ul>
+            <ul>
+                <li><span style="font-weight: bold">osm_geojson.osm2geojson(OSM XML String or DOM)</span>
+                    <ul>
+                        <li class="disc">Convert a string or DOM of OSM XML to a GeoJSON object.</li>
+                        <li class="disc">Add an optional second argument of <code>true</code>, osm_geojson.osm2geojson(yourOsm, true) to include metadata about the item in the properties, namespaced osm_*.</li>
+                    </ul>
+                </li>
+                <li><span style="font-weight: bold;">osm_geojson.geojson2osm(GeoJSON String or Object)</span>
+                    <ul>
+                        <li class="disc">Convert a GeoJSON string or object into OSM XML.</li>
+                        <li class="disc">Currently only points, polygons, and multipolygons (standalone or in feature collections), more coming soon.</li>
                     </ul>
                 </li>
             </ul>
