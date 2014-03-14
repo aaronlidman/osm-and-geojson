@@ -21,3 +21,6 @@
 
 - ####`osm_geojson.geojson2osm(GeoJSONObject)`
     - Parse and convert a GeoJSON object into OSM XML.
+
+---
+OSM & GeoJSON was written in the [Orange Public Library](http://www.flickr.com/photos/twobears2/5163373046/in/set-72157625352078650). Always upstairs, the window seats are awesome but really tough to get. More often than not I'd get stuck with one of the middle tables where foot traffic was a bit much and outlets are hard to come by.
