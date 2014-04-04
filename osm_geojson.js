@@ -11,7 +11,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
             case 'Point':
                 var coord = roundCoords([geo.coordinates]);
                 nodes += '<node id="' + count + '" lat="' + coord[0][1] +
-                '" lon="' + coord[0][0] + '">';
+                '" lon="' + coord[0][0] + '" changeset="' + changeset + '">';
                 nodes += propertiesToTags(properties);
                 nodes += '</node>';
                 count--;
