@@ -143,7 +143,6 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
         var coords = [];
         ways += '<way id="' + count + '" changeset="' + changeset + '">';
         for (var j = 0; j <= geo.coordinates[0].length - 1; j++) {
-
             coords.push([geo.coordinates[0][j][1], geo.coordinates[0][j][0]]);
         }
         coords = createNodes(coords, false);
@@ -151,7 +150,6 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
         ways += coords.nds;
         ways += propertiesToTags(properties);
         ways += '</way>';
-
         return {
             nodes: nodes,
             ways: ways
