@@ -2,12 +2,16 @@ var osm_geojson = {};
 
 osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
     function togeojson(geo, properties) {
+
+        if (typeof geo === 'string') geo = JSON.parse(geo);
+
+
         var nodes = '',
             ways = '',
             relations = '';
         properties = properties || {};
 
-        switch (geo.geometry.type) {
+        switch (geo.type) {
             case 'Point':
                 var coord = roundCoords([geo.coordinates]);
                 nodes += '<node id="' + count + '" lat="' + coord[0][1] +
@@ -22,7 +26,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
             case 'LineString':
                 break;
             case 'MultiLineString':
-                multilinestring(geo.geometry, geo.properties);
+                append(multilinestring(geo, properties));
                 break;
             case 'Polygon':
                 append(polygon(geo, properties));
@@ -50,6 +54,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
         }
 
         function append(obj) {
+
             nodes += obj.nodes;
             ways += obj.ways;
             relations += obj.relations;
@@ -129,27 +134,29 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
     }
 
 
+
     function multilinestring(geo, properties) {
         var nodes = '',
             ways = '',
             relations = '',
             role = '';
-
+        var coords = [];
         ways += '<way id="' + count + '" changeset="' + changeset + '">';
-
+        for (var j = 0; j < geo.coordinates[0].length - 1; j++) {
+            coords.push([geo.coordinates[0][j][1], geo.coordinates[0][j][0]]);
+        }
         coords = createNodes(geo.coordinates[0], true);
         nodes += coords.nodes;
         ways += coords.nds;
         ways += propertiesToTags(properties);
-
         ways += '</way>';
 
-
-        console.log(ways);
-
-
-
+        return {
+            nodes: nodes,
+            ways: ways
+        };
     }
+
 
     function propertiesToTags(properties) {
         var tags = '';
@@ -196,6 +203,8 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
 
     if (typeof geo === 'string') geo = JSON.parse(geo);
 
+
+
     var obj,
         count = -1;
     changeset = changeset || false;
@@ -235,6 +244,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
             break;
 
         case 'Feature':
+
             obj = togeojson(geo.geometry, geo.properties);
             obj = obj.osm;
             break;
