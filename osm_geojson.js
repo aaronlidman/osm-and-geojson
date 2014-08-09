@@ -7,11 +7,11 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
             relations = '';
         properties = properties || {};
 
-        switch (geo.type) {
+        switch (geo.geometry.type) {
             case 'Point':
                 var coord = roundCoords([geo.coordinates]);
                 nodes += '<node id="' + count + '" lat="' + coord[0][1] +
-                '" lon="' + coord[0][0] + '" changeset="' + changeset + '">';
+                    '" lon="' + coord[0][0] + '" changeset="' + changeset + '">';
                 nodes += propertiesToTags(properties);
                 nodes += '</node>';
                 count--;
@@ -22,6 +22,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
             case 'LineString':
                 break;
             case 'MultiLineString':
+                multilinestring(geo.geometry, geo.properties);
                 break;
             case 'Polygon':
                 append(polygon(geo, properties));
@@ -32,7 +33,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
                 properties.type = 'multipolygon';
                 count--;
 
-                for (var i = 0; i < geo.coordinates.length; i++){
+                for (var i = 0; i < geo.coordinates.length; i++) {
 
                     poly = polygon({
                         'coordinates': geo.coordinates[i]
@@ -55,10 +56,10 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
         }
 
         osm = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="github.com/aaronlidman/osm-and-geojson">' +
-        nodes + ways + relations + '</osm>';
+            nodes + ways + relations + '</osm>';
         if (osmChange) {
             osm = '<osmChange version="0.6" generator="github.com/aaronlidman/osm-and-geojson"><create>' +
-            nodes + ways + relations + '</create></osmChange>';
+                nodes + ways + relations + '</create></osmChange>';
         }
 
         return {
@@ -80,7 +81,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
         var coords = [];
         if (geo.coordinates.length > 1) {
             // polygon with holes -> multipolygon
-            if (!multipolygon) relations += '<relation id="' + count + '" changeset="' + changeset +'">';
+            if (!multipolygon) relations += '<relation id="' + count + '" changeset="' + changeset + '">';
             count--;
             properties.type = 'multipolygon';
 
@@ -91,7 +92,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
                 relations += '<member type="way" ref="' + count + '" role="' + role + '"/>';
                 ways += '<way id="' + count + '" changeset="' + changeset + '">';
                 count--;
-                for (var a = 0; a < geo.coordinates[i].length-1; a++) {
+                for (var a = 0; a < geo.coordinates[i].length - 1; a++) {
                     coords.push([geo.coordinates[i][a][1], geo.coordinates[i][a][0]]);
                 }
                 coords = createNodes(coords, true);
@@ -110,7 +111,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
             ways += '<way id="' + count + '" changeset="' + changeset + '">';
             if (multipolygon) relations += '<member type="way" ref="' + count + '" role="outer"/>';
             count--;
-            for (var j = 0; j < geo.coordinates[0].length-1; j++) {
+            for (var j = 0; j < geo.coordinates[0].length - 1; j++) {
                 coords.push([geo.coordinates[0][j][1], geo.coordinates[0][j][0]]);
             }
             coords = createNodes(coords, true);
@@ -127,6 +128,29 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
         };
     }
 
+
+    function multilinestring(geo, properties) {
+        var nodes = '',
+            ways = '',
+            relations = '',
+            role = '';
+
+        ways += '<way id="' + count + '" changeset="' + changeset + '">';
+
+        coords = createNodes(geo.coordinates[0], true);
+        nodes += coords.nodes;
+        ways += coords.nds;
+        ways += propertiesToTags(properties);
+
+        ways += '</way>';
+
+
+        console.log(ways);
+
+
+
+    }
+
     function propertiesToTags(properties) {
         var tags = '';
         for (var tag in properties) {
@@ -137,7 +161,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
         return tags;
     }
 
-    function roundCoords(coords){
+    function roundCoords(coords) {
         for (var a = 0; a < coords.length; a++) {
             coords[a][0] = Math.round(coords[a][0] * 1000000) / 1000000;
             coords[a][1] = Math.round(coords[a][1] * 1000000) / 1000000;
@@ -150,7 +174,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
             nodes = '',
             length = coords.length;
         repeatLastND = repeatLastND || false;
-            // for polygons
+        // for polygons
 
         coords = roundCoords(coords);
 
@@ -158,13 +182,16 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
             if (repeatLastND && a === 0) repeatLastND = count;
 
             nds += '<nd ref="' + count + '"/>';
-            nodes += '<node id="' + count + '" lat="' + coords[a][0] +'" lon="' + coords[a][1] +
-            '" changeset="' + changeset + '"/>';
+            nodes += '<node id="' + count + '" lat="' + coords[a][0] + '" lon="' + coords[a][1] +
+                '" changeset="' + changeset + '"/>';
 
-            if (repeatLastND && a === length-1) nds += '<nd ref="' + repeatLastND + '"/>';
+            if (repeatLastND && a === length - 1) nds += '<nd ref="' + repeatLastND + '"/>';
             count--;
         }
-        return {'nds': nds, 'nodes': nodes};
+        return {
+            'nds': nds,
+            'nodes': nodes
+        };
     }
 
     if (typeof geo === 'string') geo = JSON.parse(geo);
@@ -181,7 +208,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
                 relations: ''
             };
             obj = [];
-            for (var i = 0; i < geo.features.length; i++){
+            for (var i = 0; i < geo.features.length; i++) {
                 obj.push(togeojson(geo.features[i].geometry, geo.features[i].properties));
             }
             temp.osm = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="github.com/aaronlidman/osm-and-geojson">';
@@ -202,7 +229,7 @@ osm_geojson.geojson2osm = function(geo, changeset, osmChange) {
 
         case 'GeometryCollection':
             obj = [];
-            for (var j = 0; j < geo.geometries.length; j++){
+            for (var j = 0; j < geo.geometries.length; j++) {
                 obj.push(togeojson(geo.geometries[j]));
             }
             break;
@@ -238,8 +265,8 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
         wayCache = cacheWays();
 
     return Bounds({
-        type : 'FeatureCollection',
-        features : []
+        type: 'FeatureCollection',
+        features: []
             .concat(Ways(wayCache))
             .concat(Ways(Relations))
             .concat(Points(nodeCache))
@@ -329,7 +356,9 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
                 nds = getBy(ways[w], 'nd');
 
             if (attr(nds[0], 'ref') === attr(nds[nds.length - 1], 'ref')) {
-                feature = getFeature(ways[w], 'Polygon', [[]]);
+                feature = getFeature(ways[w], 'Polygon', [
+                    []
+                ]);
             } else {
                 feature = getFeature(ways[w], 'LineString');
             }
@@ -399,7 +428,7 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
                             }
                         }
                     }
-                } else if (way && attr(member, 'role') == 'inner'){
+                } else if (way && attr(member, 'role') == 'inner') {
                     if (feature.geometry.coordinates.length > 1) {
                         // do a point in polygon against each outer
                         // this determines which outer the inner goes with
@@ -425,17 +454,21 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
 
     function Ways(wayCache) {
         var features = [];
-        for (var w in wayCache) if (wayCache[w]) features.push(wayCache[w]);
+        for (var w in wayCache)
+            if (wayCache[w]) features.push(wayCache[w]);
         return features;
     }
 
     // https://github.com/substack/point-in-polygon/blob/master/index.js
     function pointInPolygon(point, vs) {
-        var x = point[0], y = point[1];
+        var x = point[0],
+            y = point[1];
         var inside = false;
         for (var i = 0, j = vs.length - 1; i < vs.length; j = i++) {
-            var xi = vs[i][0], yi = vs[i][1],
-                xj = vs[j][0], yj = vs[j][1],
+            var xi = vs[i][0],
+                yi = vs[i][1],
+                xj = vs[j][0],
+                yj = vs[j][1],
                 intersect = ((yi > y) != (yj > y)) &&
                 (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
             if (intersect) inside = !inside;
@@ -445,19 +478,36 @@ osm_geojson.osm2geojson = function(osm, metaProperties) {
 
     // http://stackoverflow.com/a/1359808
     function sortObject(o) {
-        var sorted = {}, key, a = [];
-        for (key in o) if (o.hasOwnProperty(key)) a.push(key);
+        var sorted = {},
+            key, a = [];
+        for (key in o)
+            if (o.hasOwnProperty(key)) a.push(key);
         a.sort();
         for (key = 0; key < a.length; key++) sorted[a[key]] = o[a[key]];
         return sorted;
     }
 
     // http://stackoverflow.com/a/1830844
-    function isNumber(n) { return !isNaN(parseFloat(n)) && isFinite(n); }
-    function attr(x, y) { return x.getAttribute(y); }
-    function attrf(x, y) { return parseFloat(x.getAttribute(y)); }
-    function getBy(x, y) { return x.getElementsByTagName(y); }
-    function lonLat(elem) { return [attrf(elem, 'lon'), attrf(elem, 'lat')]; }
+    function isNumber(n) {
+        return !isNaN(parseFloat(n)) && isFinite(n);
+    }
+
+    function attr(x, y) {
+        return x.getAttribute(y);
+    }
+
+    function attrf(x, y) {
+        return parseFloat(x.getAttribute(y));
+    }
+
+    function getBy(x, y) {
+        return x.getElementsByTagName(y);
+    }
+
+    function lonLat(elem) {
+        return [attrf(elem, 'lon'), attrf(elem, 'lat')];
+    }
+
     function setIf(x, y, o, name, f) {
         if (attr(x, y)) o[name] = f ? parseFloat(attr(x, y)) : attr(x, y);
     }
