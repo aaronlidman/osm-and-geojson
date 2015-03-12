@@ -1,7 +1,8 @@
 ## GeoJSON two OSM
 
 ## Usage
-    - `npm install geojson2osm`
+	
+	npm install geojson2osm
 
 Example:
 ```js
