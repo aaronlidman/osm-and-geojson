@@ -1,4 +1,4 @@
-## GeoJSON two OSM
+## GeoJSON to OSM
 
 ## Usage
 	
