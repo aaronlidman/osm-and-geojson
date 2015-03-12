@@ -1,7 +1,6 @@
 ## GeoJSON two OSM
 
 ## Usage
-- for nodejs
     - `npm install geojson2osm`
 
 Example:
@@ -13,9 +12,10 @@ var geo = {
           "type": "Feature",
           "properties": {
             "building:colour": #9F8169
-"building:levels":21
-"building":yes
-"height":57},
+			"building:levels":21
+			"building":yes
+			"height":57
+			},
       "geometry": {
         "type": "Polygon",
         "coordinates": [
