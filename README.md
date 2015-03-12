@@ -6,7 +6,7 @@
 
 Example:
 ```js
-var osm_geojson = require('geojson2osm');
+var geojson2osm = require('geojson2osm');
 var geo = {
     "type": "FeatureCollection",
     "features": [{
@@ -47,5 +47,5 @@ var geo = {
     }
   ]
 }
-osm_geojson.geojson2osm(geo);
+geojson2osm.geojson2osm(geo);
 ```

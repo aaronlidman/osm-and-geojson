@@ -7,11 +7,16 @@
   },
   "repository": {
     "type": "git"
-
   },
-  "dependencies": {
-  },
+  "dependencies": {},
   "scripts": {
     "run": "./index.js"
-  }
+  },
+  "description": "## Usage",
+  "keywords": [
+    "osm",
+    "geojson"
+  ],
+  "author": "Ruben Lopez M <ruben@mapbox.com> (http://rub21.github.io/)",
+  "license": "ISC"
 }
