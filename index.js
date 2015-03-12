@@ -72,11 +72,9 @@ geojson2osm.geojson2osm = function(geojson) {
     function MultiLineString(geo, properties) {
         var nodes = '',
             ways = '';
-
         var coords = [];
         ways += '<way id="' + count + '" changeset="' + changeset + '">';
         count--;
-
         for (var i = 0; i <= geo.coordinates[0].length - 1; i++) {
             coords.push([geo.coordinates[0][i][1], geo.coordinates[0][i][0]]);
         }
@@ -97,7 +95,6 @@ geojson2osm.geojson2osm = function(geojson) {
         var coords = [];
         ways += '<way id="' + count + '" changeset="' + changeset + '">';
         count--;
-
         for (var i = 0; i <= geo.coordinates[0].length - 1; i++) {
             coords.push([geo.coordinates[0][i][1], geo.coordinates[0][i][0]]);
         }
@@ -179,7 +176,7 @@ geojson2osm.geojson2osm = function(geojson) {
                 temp.ways += obj[n].ways;
                 temp.relations += obj[n].relations;
             }
-            temp.osm = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="Rub21">';
+            temp.osm = '<?xml version="1.0" encoding="UTF-8"?><osm version="0.6" generator="https://github.com/Rub21/geojson2osm">';
             temp.osm += temp.nodes + temp.ways + temp.relations;
             temp.osm += '</osm>';
             osm_file = temp.osm;
