@@ -12,7 +12,7 @@
   "scripts": {
     "run": "./index.js"
   },
-  "description": "## Usage",
+  "description": "Convert geojson to osm",
   "keywords": [
     "osm",
     "geojson"
