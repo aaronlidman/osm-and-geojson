@@ -41,7 +41,6 @@ geojson2osm.geojson2osm = function(geojson) {
   function Point(geo, properties) {
     var nodes = '';
     var coord = roundCoords([geo.coordinates]);
-
     nodes += '<node id="' + count + '" lat="' + coord[0][1] + '" lon="' + coord[0][0] + '" ' + propertiesEditNode(properties) + '>';
     nodes += propertiesToTags(properties);
     nodes += '</node>';
@@ -55,7 +54,12 @@ geojson2osm.geojson2osm = function(geojson) {
     var attributes = '';
     for (var tag in properties) {
       if (tag.indexOf('@') > -1) {
-        attributes += tag.replace('@', '') + '="' + properties[tag] + '" ';
+        if (tag === '@timestamp') {
+          var date = new Date(properties[tag] * 1000);
+          attributes += tag.replace('@', '') + '="' + date.toISOString() + '" ';
+        } else {
+          attributes += tag.replace('@', '') + '="' + properties[tag] + '" ';
+        }
       }
     }
     return attributes;
@@ -65,7 +69,12 @@ geojson2osm.geojson2osm = function(geojson) {
     var attributes = '';
     for (var tag in properties) {
       if (tag.indexOf('@') > -1 && tag !== '@id') {
-        attributes += tag.replace('@', '') + '="' + properties[tag] + '" ';
+        if (tag === '@timestamp') {
+          var date = new Date(properties[tag] * 1000);
+          attributes += tag.replace('@', '') + '="' + date.toISOString() + '" ';
+        } else {
+          attributes += tag.replace('@', '') + '="' + properties[tag] + '" ';
+        }
       }
     }
     return attributes;
