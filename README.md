@@ -5,6 +5,15 @@
 	npm install geojson2osm
 
 Example:
+
+```
+geojson2osm file.geojson > file.osm
+
+```
+
+or
+
+
 ```js
 var geojson2osm = require('geojson2osm');
 var geo = {
