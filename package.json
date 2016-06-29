@@ -5,6 +5,9 @@
   "engines": {
     "node": "0.10.28"
   },
+  "bin": {
+    "geojson2osm": "index.js"
+  },
   "repository": {
     "type": "git"
   },
