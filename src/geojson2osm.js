@@ -41,7 +41,7 @@ geojson2osm.geojson2osm = function(geojson) {
   function Point(geo, properties) {
     var nodes = '';
     var coord = roundCoords([geo.coordinates]);
-    nodes += '<node id="' + count + '" lat="' + coord[0][1] + '" lon="' + coord[0][0] + '" ' + propertiesEditNode(properties) + '>';
+    nodes += '<node lat="' + coord[0][1] + '" lon="' + coord[0][0] + '" ' + propertiesEdit(properties) + '>';
     nodes += propertiesToTags(properties);
     nodes += '</node>';
     count--;
@@ -50,32 +50,31 @@ geojson2osm.geojson2osm = function(geojson) {
     };
   }
 
-  function propertiesEditWay(properties) {
+  function propertiesEdit(properties) {
     var attributes = '';
-    for (var tag in properties) {
-      if (tag.indexOf('@') > -1) {
-        if (tag === '@timestamp') {
-          var date = new Date(properties[tag] * 1000);
-          attributes += tag.replace('@', '') + '="' + date.toISOString() + '" ';
+    var hasId = false;
+    var hasChangeset = false;
+    for (var attrb in properties) {
+      if (attrb.indexOf('@') > -1) {
+        if (attrb === '@timestamp') {
+          var date = new Date(properties[attrb] * 1000);
+          attributes += attrb.replace('@', '') + '="' + date.toISOString() + '" ';
+        } else if (attrb === '@id') {
+          attributes += attrb.replace('@', '') + '="' + properties[attrb] + '" ';
+          hasId = true;
+        } else if (attrb === '@changeset') {
+          attributes += attrb.replace('@', '') + '="' + properties[attrb] + '" ';
+          hasChangeset = true;
         } else {
-          attributes += tag.replace('@', '') + '="' + properties[tag] + '" ';
+          attributes += attrb.replace('@', '') + '="' + properties[attrb] + '" ';
         }
       }
     }
-    return attributes;
-  }
-
-  function propertiesEditNode(properties) {
-    var attributes = '';
-    for (var tag in properties) {
-      if (tag.indexOf('@') > -1 && tag !== '@id') {
-        if (tag === '@timestamp') {
-          var date = new Date(properties[tag] * 1000);
-          attributes += tag.replace('@', '') + '="' + date.toISOString() + '" ';
-        } else {
-          attributes += tag.replace('@', '') + '="' + properties[tag] + '" ';
-        }
-      }
+    if (!hasId) {
+      attributes += ' id="' + count + '" ';
+    }
+    if (!hasChangeset) {
+      attributes += ' changeset="false" ';
     }
     return attributes;
   }
@@ -84,7 +83,7 @@ geojson2osm.geojson2osm = function(geojson) {
     var nodes = '',
       ways = '';
     var coords = [];
-    ways += '<way visible="true" ' + propertiesEditWay(properties) + '>';
+    ways += '<way visible="true" ' + propertiesEdit(properties) + '>';
     count--;
     for (var i = 0; i <= geo.coordinates.length - 1; i++) {
       coords.push([geo.coordinates[i][1], geo.coordinates[i][0]]);
@@ -104,7 +103,7 @@ geojson2osm.geojson2osm = function(geojson) {
     var nodes = '',
       ways = '';
     var coords = [];
-    ways += '<way id="' + count + '" changeset="' + changeset + '">';
+    ways += '<way visible="true" ' + propertiesEdit(properties) + ' >';
     count--;
     for (var i = 0; i <= geo.coordinates[0].length - 1; i++) {
       coords.push([geo.coordinates[0][i][1], geo.coordinates[0][i][0]]);
@@ -124,7 +123,7 @@ geojson2osm.geojson2osm = function(geojson) {
     var nodes = '',
       ways = '';
     var coords = [];
-    ways += '<way id="' + count + '" changeset="' + changeset + '">';
+    ways += '<way visible="true" ' + propertiesEdit(properties) + ' >';
     count--;
     for (var i = 0; i <= geo.coordinates[0].length - 1; i++) {
       coords.push([geo.coordinates[0][i][1], geo.coordinates[0][i][0]]);
