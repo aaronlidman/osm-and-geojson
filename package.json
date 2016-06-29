@@ -1,6 +1,6 @@
 {
   "name": "geojson2osm",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "main": "./index",
   "engines": {
     "node": "0.10.28"
