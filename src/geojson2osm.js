@@ -1,4 +1,5 @@
 'use strict';
+
 var geojson2osm = {};
 geojson2osm.geojson2osm = function(geojson) {
   function togeojson(geo, properties) {
