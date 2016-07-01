@@ -6,16 +6,13 @@
     "node": "0.10.28"
   },
   "bin": {
-    "geojson2osm": "index.js"
+    "geojson2osm": "cli.js"
   },
   "repository": {
     "type": "git"
   },
-  "dependencies": {
-    "underscore": "^1.8.3"
-  },
   "scripts": {
-    "run": "./index.js"
+    "test": "tape test/*.js | tap-spec"
   },
   "description": "Convert geojson to osm",
   "keywords": [
@@ -23,5 +20,9 @@
     "geojson"
   ],
   "author": "Ruben Lopez M <ruben@mapbox.com> (http://rub21.github.io/)",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "tap-spec": "^4.1.1",
+    "tape": "^4.6.0"
+  }
 }
