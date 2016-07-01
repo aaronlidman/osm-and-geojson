@@ -1,4 +1,6 @@
-## GeoJSON to OSM
+## geojson2osm
+
+Convert gejson files to osm file.
 
 ## Usage
 	
@@ -57,4 +59,11 @@ var geo = {
   ]
 }
 geojson2osm.geojson2osm(geo);
+```
+
+### Testing
+
+```
+npm test
+
 ```
