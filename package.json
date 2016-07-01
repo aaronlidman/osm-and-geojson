@@ -6,7 +6,7 @@
     "node": "0.10.28"
   },
   "bin": {
-    "geojson2osm": "index.js"
+    "geojson2osm": "cli.js"
   },
   "repository": {
     "type": "git"

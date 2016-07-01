@@ -142,7 +142,7 @@ geojson2osm.geojson2osm = function(geojson) {
   function propertiesToTags(properties) {
     var tags = '';
     for (var tag in properties) {
-      if (properties[tag] !== null && tag) {
+      if (properties[tag] !== null && tag && tag.indexOf('@') === -1) {
         tags += '<tag k="' + tag + '" v="' + properties[tag].toString().replace(/"/g, '').replace(/&/g, '') + '"/>';
       }
     }
