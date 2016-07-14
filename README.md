@@ -1,26 +1,72 @@
-## OSM & GeoJSON
+[![Build Status](https://travis-ci.org/Rub21/geojson2osm.svg?branch=master)](https://magnum.travis-ci.com/Rub21/geojson2osm)
 
-- Converts [OSM XML](http://wiki.openstreetmap.org/wiki/OSM_XML) to [GeoJSON](http://www.geojson.org/)
-- Also converts the inverse, GeoJSON to OSM XML
-- This is a fork of [OSM2GEO by tecoholic](https://gist.github.com/tecoholic/1396990) with some improvements
-    - vanilla JS, no dependencies
-    - multipolygon support
-    - browser or nodejs
-- __warning:__ When converting GeoJSON to OSM XML only points, polygons, and multipolygons (standalone or in feature collections) are supported right now
+https://travis-ci.org/Rub21/geojson2osm.svg?branch=master
+## geojson2osm
+
+Convert gejson files to osm file.
 
 ## Usage
-- for the browser
-    - `<script src='osm_geojson.js'></script>`
-- for nodejs
-    - `npm install osm-and-geojson`
+	
+	npm install geojson2osm
 
-## API
+Example:
 
-- ####`osm_geojson.osm2geojson(osmXmlStringOrDOM)`
-    - Parse and convert a string of OSM XML to a GeoJSON object. Add an optional second argument of `true`, `osm_geojson.osm2geojson(yourOsm, true)` to include metadata about the item in the properties, namespaced `osm_*`.
+```
+geojson2osm file.geojson > file.osm
 
-- ####`osm_geojson.geojson2osm(GeoJSONObject)`
-    - Parse and convert a GeoJSON object into OSM XML.
+```
 
----
-OSM & GeoJSON was written in the [Orange Public Library](http://www.flickr.com/photos/twobears2/5163373046/in/set-72157625352078650). Always upstairs, the window seats are awesome but really tough to get. More often than not I'd get stuck with one of the middle tables where foot traffic was a bit much and outlets are hard to come by.
+or
+
+
+```js
+var geojson2osm = require('geojson2osm');
+var geo = {
+    "type": "FeatureCollection",
+    "features": [{
+          "type": "Feature",
+          "properties": {
+            "building:colour": #9F8169
+			"building:levels":21
+			"building":yes
+			"height":57
+			},
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              -434.2249470949173,
+              -13.15996269397843
+            ],
+            [
+              -434.2249470949173,
+              -13.159751140560356
+            ],
+            [
+              -434.2242631316185,
+              -13.159751140560356
+            ],
+            [
+              -434.2242631316185,
+              -13.15996269397843
+            ],
+            [
+              -434.2249470949173,
+              -13.15996269397843
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
+geojson2osm.geojson2osm(geo);
+```
+
+### Testing
+
+```
+npm test
+
+```

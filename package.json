@@ -1,28 +1,28 @@
 {
-  "name": "osm-and-geojson",
-  "version": "0.1.2",
-  "description": "convert to and from osm and geojson files",
-  "main": "osm_geojson.js",
-  "scripts": {
-    "test": "mocha -R spec"
+  "name": "geojson2osm",
+  "version": "0.0.5",
+  "main": "./index",
+  "engines": {
+    "node": "4.4.7"
+  },
+  "bin": {
+    "geojson2osm": "cli.js"
   },
   "repository": {
-    "type": "git",
-    "url": "https://github.com/aaronlidman/osm-and-geojson.git"
+    "type": "git"
   },
+  "scripts": {
+    "test": "tape test/*.js | tap-spec"
+  },
+  "description": "Convert geojson to osm",
   "keywords": [
-    "openstreetmap",
-    "geojson",
-    "maps"
+    "osm",
+    "geojson"
   ],
-  "author": "Aaron Lidman",
-  "license": "WTFPL",
-  "bugs": {
-    "url": "https://github.com/aaronlidman/osm-and-geojson/issues"
-  },
+  "author": "Ruben Lopez M <ruben@mapbox.com> (http://rub21.github.io/)",
+  "license": "ISC",
   "devDependencies": {
-    "expect.js": "~0.2.0",
-    "mocha": "~1.12.0",
-    "reqwest": "~0.9.0"
+    "tap-spec": "^4.1.1",
+    "tape": "^4.6.0"
   }
 }
