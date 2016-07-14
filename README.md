@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/Rub21/geojson2osm.svg?branch=master)](https://magnum.travis-ci.com/Rub21/geojson2osm)
+
+https://travis-ci.org/Rub21/geojson2osm.svg?branch=master
 ## geojson2osm
 
 Convert gejson files to osm file.
