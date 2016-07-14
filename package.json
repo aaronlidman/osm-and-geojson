@@ -3,7 +3,7 @@
   "version": "0.0.5",
   "main": "./index",
   "engines": {
-    "node": "0.10.28"
+    "node": "4.4.7"
   },
   "bin": {
     "geojson2osm": "cli.js"
